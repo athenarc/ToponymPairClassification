@@ -66,22 +66,11 @@ class MLConf:
 
     n_jobs = -1  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
 
-    # str: accepted values: 'prec', 'rec', 'roc', 'loose_rec', 'balanced_acc'
-    refit_score = 'rec'
-
     train_score = False
     stopping_rounds = 30
 
-    classification_method = 'lgm'
-    """str: The classification group of features to use. (*basic* | *basic_sorted* | *lgm*).
-
-    See Also
-    --------
-    :class:`~src.featuresConstruction.Features`. Details on available inputs.    
-    """
-
     # accepted values: randomized, grid, hyperband - not yet implemented!!!
-    hyperparams_search_method = 'randomized'
+    hyperparams_search_method = 'grid'
     """str: Search Method to use for finding best hyperparameters. (*randomized* | *grid*).
     
     See Also
@@ -90,7 +79,7 @@ class MLConf:
     Details on available inputs.       
     """
     #: int: Number of iterations that RandomizedSearchCV should execute. It applies only when :class:`hyperparams_search_method` equals to 'randomized'.
-    max_iter = 3
+    max_iter = 300
 
     clf_static_params = {
         'SVM': {
