@@ -114,7 +114,7 @@ class MLConf:
     SVM_hyperparameters = [
         {
             # 'kernel': ['linear', 'rbf'],
-            'gamma': [1e-2, 0.1, 1, 10, 100, 'scale'],
+            # 'gamma': [1e-2, 0.1, 1, 10, 100, 'scale'],
             'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000],
             'tol': [1e-3, 1e-4],
             'dual': [True, False],
@@ -163,10 +163,8 @@ class MLConf:
     # These parameters constitute the search space for RandomizedSearchCV in our experiments.
     SVM_hyperparameters_dist = {
         'C': expon(scale=100),
-        'gamma': expon(scale=.1),
         # 'kernel': ['rbf', 'poly', 'sigmoid'],
         'class_weight': ['balanced', None],
-        'degree': [1, 2, 3],
         'tol': [1e-3, 1e-4],
         'max_iter': [3000]
     }
