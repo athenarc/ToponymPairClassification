@@ -856,7 +856,7 @@ class calcCustomFEMLExtended(baseMetrics):
         self.test_Y = []
 
         self.classifiers = [
-            LinearSVC(random_state=0, C=1.0, max_iter=2000),
+            LinearSVC(random_state=0, C=1.0, max_iter=3000),
             # GaussianProcessClassifier(1.0 * RBF(1.0), n_jobs=3, warm_start=True),
             DecisionTreeClassifier(random_state=0, max_depth=100, max_features='auto'),
             RandomForestClassifier(
@@ -1508,6 +1508,516 @@ class calcCustomFEMLExtended(baseMetrics):
             print(df.mode(axis=0, dropna=False).transpose())
             # f.write("\nHighest freq values per column in X2_train\n")
             # df.mode(axis=0, dropna=False).transpose().to_csv(f, header=False)
+
+
+class calcWithCustomHyperparams(baseMetrics):
+    max_important_features_toshow = 50
+
+    def __init__(self, njobs, accures):
+        self.X1 = []
+        self.Y1 = []
+        self.X2 = []
+        self.Y2 = []
+        self.train_X = []
+        self.train_Y = []
+        self.test_X = []
+        self.test_Y = []
+
+        self.classifiers = [
+            LinearSVC(random_state=0, C=1.0, max_iter=3000),
+            # GaussianProcessClassifier(1.0 * RBF(1.0), n_jobs=3, warm_start=True),
+            DecisionTreeClassifier(random_state=0, max_depth=100, max_features='auto'),
+            RandomForestClassifier(
+                n_estimators=250, random_state=0, n_jobs=int(njobs), max_depth=50, oob_score=True, bootstrap=True
+            ),
+            MLPClassifier(alpha=1, random_state=0),
+            # AdaBoostClassifier(DecisionTreeClassifier(max_depth=50), n_estimators=300, random_state=0),
+            GaussianNB(),
+            # QuadraticDiscriminantAnalysis(), LinearDiscriminantAnalysis(),
+            ExtraTreesClassifier(n_estimators=100, random_state=0, n_jobs=int(njobs), max_depth=50),
+            XGBClassifier(n_estimators=3000, seed=0, nthread=int(njobs)),
+        ]
+        # self.scores = [[] for _ in range(len(self.classifiers))]
+        self.importances = dict()
+        self.mlalgs_to_run = StaticValues.classifiers_abbr.keys()
+
+        # To be used within GridSearch
+        self.inner_cv = StratifiedKFold(n_splits=config.MLConf.kfold_inner_parameter, shuffle=False,
+                                        random_state=config.seed_no)
+
+        # To be used in outer CV
+        self.outer_cv = StratifiedKFold(n_splits=config.MLConf.kfold_parameter, shuffle=False,
+                                        random_state=config.seed_no)
+
+        self.kfold = config.MLConf.kfold_parameter
+        self.n_jobs = config.MLConf.n_jobs
+
+        self.search_method = config.MLConf.hyperparams_search_method
+        self.n_iter = config.MLConf.max_iter
+
+        super(calcWithCustomHyperparams, self).__init__(len(self.classifiers), njobs, accures)
+
+    def evaluate(self, row, sorting=False, stemming=False, canonical=False, permuted=False, custom_thres='orig',
+                 selectable_features=None):
+        # if row['res'].upper() == "TRUE":
+        #     if len(self.Y1) < ((self.num_true + self.num_false) / 2.0): self.Y1.append(1.0)
+        #     else: self.Y2.append(1.0)
+        # else:
+        #     if len(self.Y1) < ((self.num_true + self.num_false) / 2.0): self.Y1.append(0.0)
+        #     else: self.Y2.append(0.0)
+        if row['res'].upper() == "TRUE":
+            self.train_Y.append(1.0)
+        else:
+            self.train_Y.append(0.0)
+
+        tmp_X1, tmp_X2 = [], []
+        for flag in list({False, sorting}):
+            a, b = transform(row['s1'], row['s2'], sorting=flag, stemming=stemming, canonical=flag)
+
+            start_time = time.time()
+
+            sim1 = StaticValues.algorithms['damerau_levenshtein'](a, b)
+            sim8 = StaticValues.algorithms['jaccard'](a, b)
+            sim2 = StaticValues.algorithms['jaro'](a, b)
+            sim3 = StaticValues.algorithms['jaro_winkler'](a, b)
+            sim4 = StaticValues.algorithms['jaro_winkler'](a[::-1], b[::-1])
+            sim11 = StaticValues.algorithms['monge_elkan'](a, b)
+            sim7 = StaticValues.algorithms['cosine'](a, b)
+            sim9 = StaticValues.algorithms['strike_a_match'](a, b)
+            sim12 = StaticValues.algorithms['soft_jaccard'](a, b)
+            if not flag: sim5 = StaticValues.algorithms['sorted_winkler'](a, b)
+            if permuted: sim6 = StaticValues.algorithms['permuted_winkler'](a, b)
+            sim10 = StaticValues.algorithms['skipgram'](a, b)
+            sim13 = StaticValues.algorithms['davies'](a, b)
+            if flag:
+                sim16 = StaticValues.algorithms['l_jaro_winkler'](a, b)
+                sim17 = StaticValues.algorithms['l_jaro_winkler'](a[::-1], b[::-1])
+                # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
+                sim15 = StaticValues.algorithms['avg_lsimilarity'](a, b)
+
+            self.train_timer += (time.time() - start_time)
+
+            # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
+            #     if permuted:
+            #         if flag: tmp_X1.append([sim1, sim2, sim3, sim4, sim6, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            #         else: tmp_X1.append([sim1, sim2, sim3, sim4, sim5, sim6, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            #     else:
+            #         if flag: tmp_X1.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            #         else: tmp_X1.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            # else:
+            if permuted:
+                if flag: tmp_X2.append([sim1, sim2, sim3, sim4, sim6, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+                else: tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim6, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            else:
+                if flag: tmp_X2.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+                else: tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            if flag: tmp_X2.append([sim16, sim17, sim15])
+
+        # for flag in list({False, True}):
+        if sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
+
+            lsim_baseThres = 'avg' if flag else 'simple'
+
+            start_time = time.time()
+
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['davies'][lsim_baseThres][0])
+            feature17 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'davies', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['skipgram'][lsim_baseThres][0]
+            )
+            feature18 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'skipgram', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['soft_jaccard'][lsim_baseThres][0]
+            )
+            feature19 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'soft_jaccard', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['strike_a_match'][lsim_baseThres][0]
+            )
+            feature20 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'strike_a_match', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['cosine'][lsim_baseThres][0]
+            )
+            feature21 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'cosine', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['monge_elkan'][lsim_baseThres][0]
+            )
+            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler'][lsim_baseThres][0]
+            )
+            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro'][lsim_baseThres][0]
+            )
+            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler_r'][lsim_baseThres][0]
+            )
+            feature25 = weighted_terms(
+                {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
+                 'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
+                {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
+                 'len': mismatchTerms['len'], 'char_len': mismatchTerms['char_len']},
+                {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']],
+                 'len': specialTerms['len'], 'char_len': specialTerms['char_len']},
+                'jaro_winkler', flag
+            )
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler'][lsim_baseThres][0]
+            )
+            feature26 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler_r'][lsim_baseThres][0]
+            )
+            feature27 = weighted_terms(
+                {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
+                 'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
+                {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
+                 'len': mismatchTerms['len'], 'char_len': mismatchTerms['char_len']},
+                {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']],
+                 'len': specialTerms['len'], 'char_len': specialTerms['char_len']},
+                'l_jaro_winkler', flag
+            )
+
+            self.timer += (time.time() - start_time)
+
+            # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
+            #     tmp_X1.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+            #                    feature25, feature26, feature27])
+            # else:
+            tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+                           feature25, feature26, feature27])
+
+            start_time = time.time()
+
+            method_nm = 'damerau_levenshtein'
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values[method_nm]['avg'][0])
+            feature1_1, feature1_2, feature1_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, method_nm)
+
+            self.timer += (time.time() - start_time)
+
+            tmp_X2.append([
+                feature1_1, feature1_2, feature1_3,
+
+                # feature8_1, feature8_2, feature8_3,
+                # feature9_1, feature9_2, feature9_3,
+                # feature10_1, feature10_2, feature10_3,
+                # feature11_1, feature11_2, feature11_3,
+                # feature12_1, feature12_2, feature12_3,
+                # feature13_1, feature13_2, feature13_3,
+                # feature14_1, feature14_2, feature14_3,
+                # feature15_1, feature15_2, feature15_3,
+                # feature16_1, feature16_2, feature16_3,
+                # int(feature2_1), int(feature2_2),
+                # feature3_1, feature3_2,
+                # int(feature4_1), int(feature4_2),
+                # int(feature5_1), int(feature5_2)
+            ])
+
+        # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
+        #     if selectable_features is not None:
+        #         self.X1.append(list(compress(chain.from_iterable(tmp_X1), selectable_features)))
+        #     else:
+        #         self.X1.append(list(chain.from_iterable(tmp_X1)))
+        # else:
+        if selectable_features is not None:
+            self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
+        else:
+            self.train_X.append(list(chain.from_iterable(tmp_X2)))
+
+        if self.file is None and self.accuracyresults:
+            file_name = 'dataset-accuracyresults-sim-metrics'
+            if canonical:
+                file_name += '_canonical'
+            if sorting:
+                file_name += '_sorted'
+            self.file = open(file_name + '.csv', 'w+')
+
+    def load_test_dataset(self, row, sorting=False, stemming=False, canonical=False, permuted=False, custom_thres='orig'):
+        if row['res'].upper() == "TRUE":
+            self.test_Y.append(1.0)
+            self.num_true += 1.0
+        else:
+            self.test_Y.append(0.0)
+            self.num_false += 1.0
+
+        tmp_X1, tmp_X2 = [], []
+        for flag in list({False, sorting}):
+            a, b = transform(row['s1'], row['s2'], sorting=flag, stemming=stemming, canonical=flag)
+
+            start_time = time.time()
+
+            sim1 = StaticValues.algorithms['damerau_levenshtein'](a, b)
+            sim8 = StaticValues.algorithms['jaccard'](a, b)
+            sim2 = StaticValues.algorithms['jaro'](a, b)
+            sim3 = StaticValues.algorithms['jaro_winkler'](a, b)
+            sim4 = StaticValues.algorithms['jaro_winkler'](a[::-1], b[::-1])
+            sim11 = StaticValues.algorithms['monge_elkan'](a, b)
+            sim7 = StaticValues.algorithms['cosine'](a, b)
+            sim9 = StaticValues.algorithms['strike_a_match'](a, b)
+            sim12 = StaticValues.algorithms['soft_jaccard'](a, b)
+            if not flag: sim5 = StaticValues.algorithms['sorted_winkler'](a, b)
+            if permuted: sim6 = StaticValues.algorithms['permuted_winkler'](a, b)
+            sim10 = StaticValues.algorithms['skipgram'](a, b)
+            sim13 = StaticValues.algorithms['davies'](a, b)
+            if flag:
+                sim16 = StaticValues.algorithms['l_jaro_winkler'](a, b)
+                sim17 = StaticValues.algorithms['l_jaro_winkler'](a[::-1], b[::-1])
+                # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
+                sim15 = StaticValues.algorithms['avg_lsimilarity'](a, b)
+
+            self.timer += (time.time() - start_time)
+
+            if permuted:
+                if flag:
+                    tmp_X2.append([sim1, sim2, sim3, sim4, sim6, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+                else:
+                    tmp_X2.append(
+                        [sim1, sim2, sim3, sim4, sim5, sim6, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            else:
+                if flag:
+                    tmp_X2.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+                else:
+                    tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
+            if flag: tmp_X2.append([sim16, sim17, sim15])
+
+        if sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
+
+            lsim_baseThres = 'avg' if flag else 'simple'
+
+            start_time = time.time()
+
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['davies'][lsim_baseThres][0])
+            feature17 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'davies', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['skipgram'][lsim_baseThres][0]
+            )
+            feature18 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'skipgram', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['soft_jaccard'][lsim_baseThres][0]
+            )
+            feature19 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'soft_jaccard', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['strike_a_match'][lsim_baseThres][0]
+            )
+            feature20 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'strike_a_match', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['cosine'][lsim_baseThres][0]
+            )
+            feature21 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'cosine', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['monge_elkan'][lsim_baseThres][0]
+            )
+            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler'][lsim_baseThres][0]
+            )
+            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro'][lsim_baseThres][0]
+            )
+            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler_r'][lsim_baseThres][0]
+            )
+            feature25 = weighted_terms(
+                {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
+                 'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
+                {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
+                 'len': mismatchTerms['len'], 'char_len': mismatchTerms['char_len']},
+                {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']],
+                 'len': specialTerms['len'], 'char_len': specialTerms['char_len']},
+                'jaro_winkler', flag
+            )
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler'][lsim_baseThres][0]
+            )
+            feature26 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler_r'][lsim_baseThres][0]
+            )
+            feature27 = weighted_terms(
+                {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
+                 'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
+                {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
+                 'len': mismatchTerms['len'], 'char_len': mismatchTerms['char_len']},
+                {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']],
+                 'len': specialTerms['len'], 'char_len': specialTerms['char_len']},
+                'l_jaro_winkler', flag
+            )
+
+            self.timer += (time.time() - start_time)
+
+            # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
+            #     tmp_X1.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+            #                    feature25, feature26, feature27])
+            # else:
+            tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+                           feature25, feature26, feature27])
+
+            start_time = time.time()
+
+            method_nm = 'damerau_levenshtein'
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values[method_nm]['avg'][0])
+            feature1_1, feature1_2, feature1_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, method_nm)
+
+            self.timer += (time.time() - start_time)
+
+            tmp_X2.append([
+                feature1_1, feature1_2, feature1_3,
+
+                # feature8_1, feature8_2, feature8_3,
+                # feature9_1, feature9_2, feature9_3,
+                # feature10_1, feature10_2, feature10_3,
+                # feature11_1, feature11_2, feature11_3,
+                # feature12_1, feature12_2, feature12_3,
+                # feature13_1, feature13_2, feature13_3,
+                # feature14_1, feature14_2, feature14_3,
+                # feature15_1, feature15_2, feature15_3,
+                # feature16_1, feature16_2, feature16_3,
+                # int(feature2_1), int(feature2_2),
+                # feature3_1, feature3_2,
+                # int(feature4_1), int(feature4_2),
+                # int(feature5_1), int(feature5_2)
+            ])
+
+        self.test_X.append(list(chain.from_iterable(tmp_X2)))
+
+    def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
+        if polynomial:
+            self.X1 = PolynomialFeatures().fit_transform(self.X1)
+            self.X2 = PolynomialFeatures().fit_transform(self.X2)
+
+        # iterate over classifiers
+        if set(ml_algs) != {'all'}: self.mlalgs_to_run = ml_algs
+        # for i, (name, clf) in enumerate(zip(self.names, self.classifiers)):
+
+        for name in self.mlalgs_to_run:
+            if name not in StaticValues.classifiers_abbr.keys():
+                print('{} is not a valid ML algorithm'.format(name))
+                continue
+
+            clf_abbr = StaticValues.classifiers_abbr[name]
+            model = self.classifiers[clf_abbr]
+
+            train_time = 0
+            predictedL = list()
+            tot_features = list()
+            print("Training {}...".format(StaticValues.classifiers[clf_abbr]))
+            # for X_train, y_train, X_pred, y_pred in izip(
+            #         (np.asarray(row, float) for row in (self.X1, self.X2)),
+            #         (np.asarray(row, float) for row in (self.Y1, self.Y2)),
+            #         (np.asarray(row, float) for row in (self.X2, self.X1)),
+            #         ((row for row in (self.Y2, self.Y1)))
+            # ):
+            start_time = time.time()
+            features_supported = [True] * len(StaticValues.featureColumns)
+            # if features is not None:
+            #     features_supported = [x and y for x, y in zip(features_supported, features)]
+            # if fs_method is not None and {'rf', 'et', 'xgboost'}.intersection({name}):
+            #     X_train, X_pred, features_supported = self._perform_feature_selection(
+            #         X_train, y_train, X_pred, fs_method, model
+            #     )
+            #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
+
+            model.fit(np.asarray(self.train_X), self.train_Y)
+            train_time += (time.time() - start_time)
+
+            start_time = time.time()
+            predictedL += list(model.predict(self.test_X))
+            # predictedL += list(best_clf['estimator'].predict(self.test_X))
+            self.timers[clf_abbr] += (time.time() - start_time)
+
+            # if hasattr(model, "feature_importances_"):
+            #     if clf_abbr not in self.importances:
+            #         self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
+            #
+            #     for idx, val in zip([i for i, x in enumerate(features_supported) if x], model.feature_importances_):
+            #         self.importances[clf_abbr][idx] += val
+            # elif hasattr(model, "coef_"):
+            #     if clf_abbr not in self.importances:
+            #         self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
+            #
+            #     for idx, val in zip([i for i, x in enumerate(features_supported) if x],
+            #                         model.coef_.ravel()):
+            #         self.importances[clf_abbr][idx] += val
+            # # print(model.score(X_pred, y_pred))
+
+            print("Best features discovered: ", end="")
+            print(*tot_features, sep=",")
+            print("Training took {0:.3f} sec ({1:.3f} min)".format(train_time, train_time / 60.0))
+            self.timers[clf_abbr] += self.timer
+
+            print("Matching records...")
+            # real = self.Y2 + self.Y1
+            real = self.test_Y
+            for pos in range(len(real)):
+                if real[pos] == 1.0:
+                    if predictedL[pos] == 1.0:
+                        self.num_true_predicted_true[clf_abbr] += 1.0
+                        if self.accuracyresults:
+                            self.file.write("TRUE\tTRUE\n")
+                    else:
+                        self.num_true_predicted_false[clf_abbr] += 1.0
+                        if self.accuracyresults:
+                            self.file.write("TRUE\tFALSE\n")
+                else:
+                    if predictedL[pos] == 1.0:
+                        self.num_false_predicted_true[clf_abbr] += 1.0
+                        if self.accuracyresults:
+                            self.file.write("FALSE\tTRUE\n")
+                    else:
+                        self.num_false_predicted_false[clf_abbr] += 1.0
+                        if self.accuracyresults:
+                            self.file.write("FALSE\tFALSE\n")
+
+            # if hasattr(clf, "decision_function"):
+            #     Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+            # else:
+            #     Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+
+    def print_stats(self):
+        for name in self.mlalgs_to_run:
+            if name not in StaticValues.classifiers_abbr.keys():
+                continue
+
+            idx = StaticValues.classifiers_abbr[name]
+            status, acc, pre, rec, f1, t = self._compute_stats(idx, True)
+            if status == 0:
+                self._print_stats(StaticValues.classifiers[idx], acc, pre, rec, f1, t)
+
+                if idx not in self.importances or not isinstance(self.importances[idx], np.ndarray):
+                    print("The classifier {} does not expose \"coef_\" or \"feature_importances_\" attributes".format(
+                        name))
+                else:
+                    importances = self.importances[idx] / 2.0
+                    importances = np.ma.masked_equal(importances, 0.0)
+                    if importances.mask is np.ma.nomask: importances.mask = np.zeros(importances.shape, dtype=bool)
+
+                    # indices = np.argsort(importances)[::-1]
+                    # for f in range(min(importances.shape[0], self.max_important_features_toshow)):
+                    #     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+                    indices = np.argsort(importances.compressed())[::-1][
+                              :min(importances.shape[0], self.max_important_features_toshow)]
+                    headers = ["name", "score"]
+                    print(tabulate(zip(
+                        np.asarray(StaticValues.featureColumns, object)[~importances.mask][indices],
+                        importances.compressed()[indices]
+                    ), headers, tablefmt="simple"))
+
+                # if hasattr(clf, "feature_importances_"):
+                #         # if results:
+                #         #     result[indices[f]] = importances[indices[f]]
+                print("")
+                sys.stdout.flush()
 
 
 class calcDLearning(baseMetrics):

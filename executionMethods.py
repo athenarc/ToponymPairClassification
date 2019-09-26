@@ -20,6 +20,7 @@ class Evaluator:
         'TestMetrics': testMetrics,
         'customFEMLExtended': calcCustomFEMLExtended,
         'lSimilarityMetrics': calcLSimilarities,
+        'customHyperparams': calcWithCustomHyperparams,
     }
 
     def __init__(self, ml_algs, sorting=False, stemming=False, canonical=False, permuted=False, only_latin=False, encoding=None):
