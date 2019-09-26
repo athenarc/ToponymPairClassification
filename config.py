@@ -6,7 +6,8 @@ from scipy.stats import randint as sp_randint, expon, truncnorm
 
 
 #: Relative path to the test dataset. This value is used only when the *dtest* cmd argument is None.
-test_dataset = 'datasets/dataset-string-similarity-test.txt'
+# test_dataset = 'datasets/dataset-string-similarity-test.txt'
+test_dataset = 'datasets/dataset-string-similarity.txt'
 
 #: float: Similarity threshold on whether sorting on toponym tokens is applied or not. It is triggered on a score
 #: below the assigned threshold.
