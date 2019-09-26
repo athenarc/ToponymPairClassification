@@ -693,7 +693,7 @@ class calcCustomFEML(baseMetrics):
             if self.search_method.lower() == 'grid':
                 clf = GridSearchCV(
                     clf_names[clf_abbr][0](), clf_names[clf_abbr][1],
-                    cv=self.outer_cv, scoring='accuracy', refit=config.MLConf.refit_score, verbose=1,
+                    cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, return_train_score=config.MLConf.train_score
                 )
             # elif self.search_method.lower() == 'hyperband' and clf_key in ['XGBoost', 'Extra-Trees', 'Random Forest']:
@@ -707,7 +707,7 @@ class calcCustomFEML(baseMetrics):
             else:  # randomized is used as default
                 clf = RandomizedSearchCV(
                     clf_names[clf_abbr][0](), clf_names[clf_abbr][2],
-                    cv=self.outer_cv, scoring='accuracy', refit=config.MLConf.refit_score, verbose=1,
+                    cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
             clf.fit(self.train_X, pd.Series(self.train_Y))
@@ -1332,7 +1332,7 @@ class calcCustomFEMLExtended(baseMetrics):
             if self.search_method.lower() == 'grid':
                 clf = GridSearchCV(
                     clf_names[clf_abbr][0](), clf_names[clf_abbr][1],
-                    cv=self.outer_cv, scoring='accuracy', refit=config.MLConf.refit_score, verbose=1,
+                    cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, return_train_score=config.MLConf.train_score
                 )
             # elif self.search_method.lower() == 'hyperband' and clf_key in ['XGBoost', 'Extra-Trees', 'Random Forest']:
@@ -1346,7 +1346,7 @@ class calcCustomFEMLExtended(baseMetrics):
             else:  # randomized is used as default
                 clf = RandomizedSearchCV(
                     clf_names[clf_abbr][0](), clf_names[clf_abbr][2],
-                    cv=self.outer_cv, scoring='accuracy', refit=config.MLConf.refit_score, verbose=1,
+                    cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
             clf.fit(self.train_X, pd.Series(self.train_Y))
