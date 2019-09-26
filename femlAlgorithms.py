@@ -45,7 +45,9 @@ punctuation_regex = re.compile(u'[‘’“”\'"!?;/⧸⁄‹›«»`ʿ,.-]')
 
 clf_names = [
     # 'SVM':
-        [LinearSVC, config.MLConf.SVM_hyperparameters, config.MLConf.SVM_hyperparameters_dist],
+    [
+        LinearSVC, config.MLConf.SVM_hyperparameters, config.MLConf.SVM_hyperparameters_dist
+    ],
     # 'DecisionTree':
     [
         DecisionTreeClassifier, config.MLConf.DecisionTree_hyperparameters,
@@ -710,7 +712,7 @@ class calcCustomFEML(baseMetrics):
                     cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
-            clf.fit(self.train_X, pd.Series(self.train_Y))
+            clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
 
             hyperparams_found = dict()
             hyperparams_found['score'] = clf.best_score_
@@ -747,7 +749,7 @@ class calcCustomFEML(baseMetrics):
             #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
 
             # model.fit(X_train, y_train)
-            best_clf['estimator'].fit(self.train_X, self.train_Y)
+            best_clf['estimator'].fit(np.asarray(self.train_X), self.train_Y)
             train_time += (time.time() - start_time)
 
             start_time = time.time()
@@ -755,20 +757,20 @@ class calcCustomFEML(baseMetrics):
             predictedL += list(best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
-            if hasattr(model, "feature_importances_"):
-                if clf_abbr not in self.importances:
-                    self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
-
-                for idx, val in zip([i for i, x in enumerate(features_supported) if x], model.feature_importances_):
-                    self.importances[clf_abbr][idx] += val
-            elif hasattr(model, "coef_"):
-                if clf_abbr not in self.importances:
-                    self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
-
-                for idx, val in zip([i for i, x in enumerate(features_supported) if x],
-                                    model.coef_.ravel()):
-                    self.importances[clf_abbr][idx] += val
-            # print(model.score(X_pred, y_pred))
+            # if hasattr(model, "feature_importances_"):
+            #     if clf_abbr not in self.importances:
+            #         self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
+            #
+            #     for idx, val in zip([i for i, x in enumerate(features_supported) if x], model.feature_importances_):
+            #         self.importances[clf_abbr][idx] += val
+            # elif hasattr(model, "coef_"):
+            #     if clf_abbr not in self.importances:
+            #         self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
+            #
+            #     for idx, val in zip([i for i, x in enumerate(features_supported) if x],
+            #                         model.coef_.ravel()):
+            #         self.importances[clf_abbr][idx] += val
+            # # print(model.score(X_pred, y_pred))
 
             print("Best features discovered: ", end="")
             print(*tot_features, sep=",")
