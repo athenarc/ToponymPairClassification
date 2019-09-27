@@ -617,7 +617,7 @@ class calcCustomFEML(baseMetrics):
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
         else:
-            self.train_X.append(list(chain.from_iterable(tmp_X2)))
+            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
         if self.file is None and self.accuracyresults:
             file_name = 'dataset-accuracyresults-sim-metrics'
@@ -669,7 +669,7 @@ class calcCustomFEML(baseMetrics):
                 else:
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
 
-        self.test_X.append(list(chain.from_iterable(tmp_X2)))
+        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
         if polynomial:
@@ -1115,7 +1115,7 @@ class calcCustomFEMLExtended(baseMetrics):
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
         else:
-            self.train_X.append(list(chain.from_iterable(tmp_X2)))
+            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
         if self.file is None and self.accuracyresults:
             file_name = 'dataset-accuracyresults-sim-metrics'
@@ -1303,7 +1303,7 @@ class calcCustomFEMLExtended(baseMetrics):
         # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
         # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
 
-        self.test_X.append(list(chain.from_iterable(tmp_X2)))
+        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
         if polynomial:
@@ -1727,7 +1727,7 @@ class calcWithCustomHyperparams(baseMetrics):
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
         else:
-            self.train_X.append(list(chain.from_iterable(tmp_X2)))
+            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
         if self.file is None and self.accuracyresults:
             file_name = 'dataset-accuracyresults-sim-metrics'
@@ -1889,7 +1889,7 @@ class calcWithCustomHyperparams(baseMetrics):
                 # int(feature5_1), int(feature5_2)
             ])
 
-        self.test_X.append(list(chain.from_iterable(tmp_X2)))
+        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
         if polynomial:
