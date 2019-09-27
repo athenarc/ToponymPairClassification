@@ -1351,7 +1351,7 @@ class calcCustomFEMLExtended(baseMetrics):
                     cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
-            clf.fit(self.train_X, pd.Series(self.train_Y))
+            clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
 
             hyperparams_found = dict()
             hyperparams_found['score'] = clf.best_score_
@@ -1388,7 +1388,7 @@ class calcCustomFEMLExtended(baseMetrics):
             #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
 
             # model.fit(X_train, y_train)
-            best_clf['estimator'].fit(self.train_X, self.train_Y)
+            best_clf['estimator'].fit(np.asarray(self.train_X), self.train_Y)
             train_time += (time.time() - start_time)
 
             start_time = time.time()
@@ -1932,7 +1932,7 @@ class calcWithCustomHyperparams(baseMetrics):
             train_time += (time.time() - start_time)
 
             start_time = time.time()
-            predictedL += list(model.predict(self.test_X))
+            predictedL += list(model.predict(np.asarray(self.test_X)))
             # predictedL += list(best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
