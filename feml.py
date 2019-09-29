@@ -29,6 +29,7 @@ Options:
   --buildDataset                Build the dataset for evaluation.
   --fs <FeatureSelection>       Method to use for feature selection.
   -f <Features>                 Comma separated features that will be used for training/predict from the available ones.
+  --case <metrics_type>         Metrics searched for best parameters, i.e., basic, sorted, lgm. [default: basic]
 
 Arguments:
   evaluator_type            'SotAMetrics' (default)
@@ -53,6 +54,9 @@ Arguments:
                             'rfe'
   encoding_type             'all'
                             'latin'
+  metrics_type              'basic'
+                            'sorted'
+                            'lgm'
 """
 
 import os, sys
@@ -90,7 +94,7 @@ def main(args):
 
         if int(args['--test']): evaluator.test_cases(fpath_ds, int(args['--test']))
         elif args['--cmp']: evaluator.print_false_posneg(dataset_path)
-        elif args['--optimalThres']: evaluator.evaluate_metrics_with_various_thres(fpath_ds)
+        elif args['--optimalThres']: evaluator.evaluate_metrics_with_various_thres(fpath_ds, args['--case'])
         elif args['--optimalSortingThres']: evaluator.evaluate_sorting_with_various_thres(fpath_ds)
         else: evaluator.evaluate_metrics(fpath_ds, args['--fs'], args['-f'])
     else: print("No file {0} exists!!!\n".format(fpath_ds))

@@ -349,6 +349,7 @@ class StaticValues:
         "LSimilarity_soft_jaccard_wavg",
         "LSimilarity_strike_a_match_wavg",
         "LSimilarity_cosine_wavg",
+        "LSimilarity_jaccard_wavg",
         "LSimilarity_monge_elkan_wavg",
         "LSimilarity_jaro_winkler_wavg",
         "LSimilarity_jaro_wavg",

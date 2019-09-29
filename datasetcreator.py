@@ -699,7 +699,8 @@ def score_per_term(baseTerms, mismatchTerms, specialTerms, method):
 
 def calibrate_weights(baseTerms, mismatchTerms, specialTerms, method, averaged=False, tmode=False):
     lsim_variance = 'avg' if averaged else 'simple'
-    weights = LSimilarityVars.lsimilarity_weights[:] if tmode else LSimilarityVars.per_metric_optimal_values[method][lsim_variance][1][:]
+    weights = LSimilarityVars.lsimilarity_weights[:] if len(LSimilarityVars.lsimilarity_weights) \
+        else LSimilarityVars.per_metric_optimal_values[method][lsim_variance][1][:]
 
     if baseTerms['len'] == 0:
         weights[1] += weights[0] * (float(mismatchTerms['len']) / (mismatchTerms['len'] + specialTerms['len']))
