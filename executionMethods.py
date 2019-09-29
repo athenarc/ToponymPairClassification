@@ -142,6 +142,7 @@ class Evaluator:
                         feml.update_weights(w)
                         print('Computing stats for weights ({})'.format(','.join(map(str, w))))
                         print('Computing stats for threshold', end='')
+                        sys.stdout.flush()
 
                         X_train, y_train, X_test, y_test = X.iloc[train_idx], y.iloc[train_idx], X.iloc[test_idx], y.iloc[test_idx]
                         fX = None
