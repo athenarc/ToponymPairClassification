@@ -106,41 +106,6 @@ class Evaluator:
 
             start_time = time.time()
             print("Reading dataset...")
-            # with open(dataset) as csvfile:
-            #     reader = csv.DictReader(csvfile, fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
-            #                             delimiter='\t')
-            #
-            #     print('Computing stats for threshold', end='')
-            #
-            #     all_res = {}
-            #     for m in StaticValues.methods: all_res[m[0]] = []
-            #     separator = ''
-            #     for i in range(30, 91, 5):
-            #         print('{0} {1}'.format(separator, float(i / 100.0)), end='')
-            #         sys.stdout.flush()
-            #         separator = ','
-            #
-            #         csvfile.seek(0)
-            #         for row in reader:
-            #             self.evalClass.evaluate(
-            #                 row, self.sorting, self.stemming, self.canonical, self.permuted, float(i / 100.0)
-            #             )
-            #         if hasattr(self.evalClass, "train_classifiers"): self.evalClass.train_classifiers(self.ml_algs)
-            #         tmp_res = self.evalClass.get_stats()
-            #
-            #         for key, val in tmp_res.items():
-            #             all_res[key].append([float(i / 100.0), val])
-            #
-            #         self.evalClass.reset_vars()
-            #
-            #     print('\nThe process took {0:.2f} sec'.format(time.time() - start_time))
-            #     for k, val in all_res.items():
-            #         if len(val) == 0:
-            #             print('{0} is empty'.format(k))
-            #             continue
-            #
-            #         print(k, max(val, key=lambda x: x[1][0]))
-            #     sys.stdout.flush()
 
             start_pos = 0
             end_pos = 12
