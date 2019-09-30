@@ -139,11 +139,14 @@ class Evaluator:
                     w = (float(n / 10.0),) + w
                     feml.update_weights(w)
                     print('Computing stats for weights ({})'.format(','.join(map(str, w))))
-                    print('Computing stats for threshold', end='')
+                    print('Computing stats for', end='')
                     sys.stdout.flush()
 
+                    separator = ' split thres:'
                     for s in range(40, split_pos, 10):
                         self.split_thres = float(s / 100.0)
+                        print('{0} ({1})'.format(separator, float(s / 100.0)), end='')
+                        sys.stdout.flush()
 
                         fX = None
                         if features == 'basic':
@@ -153,7 +156,7 @@ class Evaluator:
                         elif features == 'lgm':
                             fX = np.asarray(map(self.compute_features, X['s1'], X['s2']))
 
-                        separator = ''
+                        separator = ' and threshold: '
                         for i in range(30, 91, 5):
                             print('{0} {1}'.format(separator, float(i / 100.0)), end='')
                             sys.stdout.flush()
@@ -166,6 +169,9 @@ class Evaluator:
                                     accuracy_score(y, tmp_nd[:, idx]), prec, rec, f1,
                                     float(i / 100.0), [self.split_thres, list(w)]
                                 ])
+                        separator = '\t split thes:'
+                        print()
+                    print()
 
             for key, val in res.items():
                 max_val = max(val, key=lambda x: x[0])
