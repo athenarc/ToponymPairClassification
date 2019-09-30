@@ -126,82 +126,46 @@ class Evaluator:
             y = X['res']
             X.drop(columns=['res', "c1", "c2", "a1", "a2", "cc1", "cc2"], inplace=True)
 
-            res = {key: np.zeros(shape=(5, 9)) for key in StaticValues.featureColumns[start_pos:end_pos]}
-            fold = 1
-            outer_cv = StratifiedKFold(n_splits=5, shuffle=False, random_state=13)
             feml = FEMLFeatures()
-            for train_idx, test_idx in outer_cv.split(X, y):
-                print('Fold {}...'.format(fold))
+            res = {key: [] for key in StaticValues.featureColumns[start_pos:end_pos]}
+            for n in [3.34] + list(range(4, range_pos)):
+                weight_combs = [
+                    tuple(float(x / 10.0) for x in seq)
+                    for seq in itertools.product([1, 2, 3, 4, 5, 2.5, 3.33], repeat=2)
+                    if sum(seq) == (10 - n)
+                ]
 
-                for n in [3.34] + list(range(4, range_pos)):
-                    weight_combs = [
-                        tuple(float(x / 10.0) for x in seq)
-                        for seq in itertools.product([1, 2, 3, 4, 5, 2.5, 3.33], repeat=2)
-                        if sum(seq) == (10 - n)
-                    ]
+                for w in weight_combs:
+                    w = (float(n / 10.0),) + w
+                    feml.update_weights(w)
+                    print('Computing stats for weights ({})'.format(','.join(map(str, w))))
+                    print('Computing stats for threshold', end='')
+                    sys.stdout.flush()
 
-                    for w in weight_combs:
-                        w = (float(n / 10.0),) + w
-                        feml.update_weights(w)
-                        print('Computing stats for weights ({})'.format(','.join(map(str, w))))
-                        print('Computing stats for threshold', end='')
-                        sys.stdout.flush()
-
-                        X_train, y_train, X_test, y_test = X.iloc[train_idx], y.iloc[train_idx], X.iloc[test_idx], y.iloc[test_idx]
-
-                        tmp_res = {key: [] for key in StaticValues.featureColumns[start_pos:end_pos]}
-                        for s in range(40, split_pos, 10):
-                            self.split_thres = float(s / 100.0)
-
-                            fX = None
-                            if features == 'basic':
-                                fX = np.asarray(map(self._compute_basic_features, X_train['s1'], X_train['s2']))
-                            elif features == 'sorted':
-                                fX = np.asarray(map(self._compute_sorted_features, X_train['s1'], X_train['s2']))
-                            elif features == 'lgm':
-                                fX = np.asarray(map(self.compute_features, X_train['s1'], X_train['s2']))
-
-                            separator = ''
-                            for i in range(30, 91, 5):
-                                print('{0} {1}'.format(separator, float(i / 100.0)), end='')
-                                sys.stdout.flush()
-                                separator = ','
-
-                                tmp_nd = fX >= float(i / 100.0)
-                                for idx, name in enumerate(StaticValues.featureColumns[start_pos:end_pos], start=start_pos):
-                                    prec, rec, f1, _ = precision_recall_fscore_support(y_train, tmp_nd[:, idx], average='binary')
-                                    tmp_res[name].append([
-                                        accuracy_score(y_train, tmp_nd[:, idx]), prec, rec, f1,
-                                        float(i / 100.0), self.split_thres
-                                    ])
+                    for s in range(40, split_pos, 10):
+                        self.split_thres = float(s / 100.0)
 
                         fX = None
                         if features == 'basic':
-                            fX = pd.DataFrame(
-                                map(self._compute_basic_features, X_test['s1'], X_test['s2']),
-                                columns=StaticValues.featureColumns[0:end_pos]
-                            )
-                        elif features in ['sorted', 'lgm']:
-                            fX = pd.DataFrame(
-                                map(self._compute_sorted_features, X_test['s1'], X_test['s2']),
-                                columns=StaticValues.featureColumns[0:42]
-                            )
+                            fX = np.asarray(map(self._compute_basic_features, X['s1'], X['s2']))
+                        elif features == 'sorted':
+                            fX = np.asarray(map(self._compute_sorted_features, X['s1'], X['s2']))
+                        elif features == 'lgm':
+                            fX = np.asarray(map(self.compute_features, X['s1'], X['s2']))
 
-                        for key, val in tmp_res.items():
-                            max_val = max(val, key=lambda x: x[0])
-                            tmp_nd = fX[key] >= max_val[4]
+                        separator = ''
+                        for i in range(30, 91, 5):
+                            print('{0} {1}'.format(separator, float(i / 100.0)), end='')
+                            sys.stdout.flush()
+                            separator = ','
 
-                            acc = accuracy_score(y_test, tmp_nd)
-                            if acc > res[key][(fold - 1), 0]:
-                                res[key][(fold - 1), 0] = acc
-                                res[key][(fold - 1), 1:4] = precision_recall_fscore_support(y_test, tmp_nd, average='binary')[:3]
-                                res[key][(fold - 1), 4] = max_val[4]
-                                res[key][(fold - 1), 5] = self.split_thres
-                                res[key][(fold - 1), 6:9] = w
-                        print()
-
-                fold += 1
-                print()
+                            tmp_nd = fX >= float(i / 100.0)
+                            for idx, name in enumerate(StaticValues.featureColumns[start_pos:end_pos], start=start_pos):
+                                prec, rec, f1, _ = precision_recall_fscore_support(y, tmp_nd[:, idx], average='binary')
+                                res[name].append([
+                                    accuracy_score(y, tmp_nd[:, idx]), prec, rec, f1,
+                                    float(i / 100.0), [self.split_thres, list(w)]
+                                ])
 
             for key, val in res.items():
                 max_val = max(val, key=lambda x: x[0])

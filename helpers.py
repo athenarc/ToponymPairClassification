@@ -104,10 +104,10 @@ class StaticValues:
             'orig': 0.7, 'sorted': 0.85, 'orig_onlylatin': 0.70, 'sorted_onlylatin': 0.7,
             'orig_latin_EU/NA': 0.7, 'sorted_latin_EU/NA': 0.7, 'orig_all': 0.7, 'sorted_all': 0.7
         }],
-        ["Permuted Jaro-Winkler", {
-            'orig': 0.7, 'sorted': 0.7, 'orig_onlylatin': 0.60, 'sorted_onlylatin': 0.6,
-            'orig_latin_EU/NA': 0.4, 'sorted_latin_EU/NA': 0.55
-        }],
+        # ["Permuted Jaro-Winkler", {
+        #     'orig': 0.7, 'sorted': 0.7, 'orig_onlylatin': 0.60, 'sorted_onlylatin': 0.6,
+        #     'orig_latin_EU/NA': 0.4, 'sorted_latin_EU/NA': 0.55
+        # }],
         ["Cosine N-grams", {
             'orig': 0.4, 'sorted': 0.7, 'orig_onlylatin': 0.35, 'sorted_onlylatin': 0.45,
             'orig_latin_EU/NA': 0.4, 'sorted_latin_EU/NA': 0.45, 'orig_all': 0.4, 'sorted_all': 0.45
