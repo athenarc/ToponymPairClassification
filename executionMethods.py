@@ -39,6 +39,7 @@ class Evaluator:
         self.stop_words = []
         self.abbr = {'A': [], 'B': []}
         self.evalClass = None
+        self.split_thres = None
 
     def initialize(self, dataset, evalType='SotAMetrics', njobs=2, accuracyresults=False):
         try:
@@ -110,6 +111,7 @@ class Evaluator:
             start_pos = 0
             end_pos = 12
             range_pos = -1
+            split_pos = 41
             if features == 'sorted':
                 start_pos = 12
                 end_pos = 25
@@ -117,13 +119,14 @@ class Evaluator:
                 start_pos = 25
                 end_pos = 38
                 range_pos = 8
+                split_pos = 80
 
             fields = ["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"]
             X = pd.read_csv(dataset, sep='\t', header=None, names=fields)
             y = X['res']
             X.drop(columns=['res', "c1", "c2", "a1", "a2", "cc1", "cc2"], inplace=True)
 
-            res = {key: np.zeros(shape=(5, 8)) for key in StaticValues.featureColumns[start_pos:end_pos]}
+            res = {key: np.zeros(shape=(5, 9)) for key in StaticValues.featureColumns[start_pos:end_pos]}
             fold = 1
             outer_cv = StratifiedKFold(n_splits=5, shuffle=False, random_state=13)
             feml = FEMLFeatures()
@@ -145,28 +148,32 @@ class Evaluator:
                         sys.stdout.flush()
 
                         X_train, y_train, X_test, y_test = X.iloc[train_idx], y.iloc[train_idx], X.iloc[test_idx], y.iloc[test_idx]
-                        fX = None
-                        if features == 'basic':
-                            fX = np.asarray(map(self._compute_basic_features, X_train['s1'], X_train['s2']))
-                        elif features == 'sorted':
-                            fX = np.asarray(map(self._compute_sorted_features, X_train['s1'], X_train['s2']))
-                        elif features == 'lgm':
-                            fX = np.asarray(map(self.compute_features, X_train['s1'], X_train['s2']))
 
                         tmp_res = {key: [] for key in StaticValues.featureColumns[start_pos:end_pos]}
+                        for s in range(40, split_pos, 10):
+                            self.split_thres = float(s / 100.0)
 
-                        separator = ''
-                        for i in range(30, 91, 5):
-                            print('{0} {1}'.format(separator, float(i / 100.0)), end='')
-                            sys.stdout.flush()
-                            separator = ','
+                            fX = None
+                            if features == 'basic':
+                                fX = np.asarray(map(self._compute_basic_features, X_train['s1'], X_train['s2']))
+                            elif features == 'sorted':
+                                fX = np.asarray(map(self._compute_sorted_features, X_train['s1'], X_train['s2']))
+                            elif features == 'lgm':
+                                fX = np.asarray(map(self.compute_features, X_train['s1'], X_train['s2']))
 
-                            tmp_nd = fX >= float(i / 100.0)
-                            for idx, name in enumerate(StaticValues.featureColumns[start_pos:end_pos], start=start_pos):
-                                prec, rec, f1, _ = precision_recall_fscore_support(y_train, tmp_nd[:, idx], average='binary')
-                                tmp_res[name].append([
-                                    accuracy_score(y_train, tmp_nd[:, idx]), prec, rec, f1, float(i / 100.0)
-                                ])
+                            separator = ''
+                            for i in range(30, 91, 5):
+                                print('{0} {1}'.format(separator, float(i / 100.0)), end='')
+                                sys.stdout.flush()
+                                separator = ','
+
+                                tmp_nd = fX >= float(i / 100.0)
+                                for idx, name in enumerate(StaticValues.featureColumns[start_pos:end_pos], start=start_pos):
+                                    prec, rec, f1, _ = precision_recall_fscore_support(y_train, tmp_nd[:, idx], average='binary')
+                                    tmp_res[name].append([
+                                        accuracy_score(y_train, tmp_nd[:, idx]), prec, rec, f1,
+                                        float(i / 100.0), self.split_thres
+                                    ])
 
                         fX = None
                         if features == 'basic':
@@ -185,11 +192,12 @@ class Evaluator:
                             tmp_nd = fX[key] >= max_val[4]
 
                             acc = accuracy_score(y_test, tmp_nd)
-                            if acc > res[key][(fold -1), 0]:
+                            if acc > res[key][(fold - 1), 0]:
                                 res[key][(fold - 1), 0] = acc
                                 res[key][(fold - 1), 1:4] = precision_recall_fscore_support(y_test, tmp_nd, average='binary')[:3]
                                 res[key][(fold - 1), 4] = max_val[4]
-                                res[key][(fold - 1), 5:8] = w
+                                res[key][(fold - 1), 5] = self.split_thres
+                                res[key][(fold - 1), 6:9] = w
                         print()
 
                 fold += 1
@@ -258,9 +266,11 @@ class Evaluator:
 
     def _compute_lgm_sim(self, s1, s2, metric, w_type='avg'):
         baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
-            s1, s2, LSimilarityVars.per_metric_optimal_values[metric][w_type][0])
+            s1, s2,
+            LSimilarityVars.per_metric_optimal_values[metric][w_type][0] if self.split_thres is None else self.split_thres
+        )
 
-        if metric in ['jaro_winkler_r', 'lgm_jaro_winkler_r']:
+        if metric in ['jaro_winkler_r', 'l_jaro_winkler_r']:
             return weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
