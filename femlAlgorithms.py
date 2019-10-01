@@ -82,7 +82,7 @@ def ascii_transliteration_and_punctuation_strip(s):
     return s
 
 
-def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' ', thres=0.55, only_sorting=False):
+def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' '):
     a = strA.decode('utf8') #.lower()
     b = strB.decode('utf8') #.lower()
 
@@ -94,15 +94,12 @@ def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimi
         tmp_a = a.replace(' ', '')
         tmp_b = b.replace(' ', '')
 
-        if StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b) < thres:
+        if StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b) < StaticValues.algorithms['damerau_levenshtein'](a, b): #thres:
             a = " ".join(sorted_nicely(a.split(delimiter)))
             b = " ".join(sorted_nicely(b.split(delimiter)))
-        elif StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b) > StaticValues.algorithms['damerau_levenshtein'](a, b):
-            a = tmp_a
-            b = tmp_b
-    elif only_sorting:
-        a = " ".join(sorted_nicely(a.split(delimiter)))
-        b = " ".join(sorted_nicely(b.split(delimiter)))
+        # elif StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b) > StaticValues.algorithms['damerau_levenshtein'](a, b):
+        #     a = tmp_a
+        #     b = tmp_b
 
     if stemming:
         a = perform_stemming(a)
@@ -860,7 +857,12 @@ class calcCustomFEMLExtended(baseMetrics):
             # GaussianProcessClassifier(1.0 * RBF(1.0), n_jobs=3, warm_start=True),
             DecisionTreeClassifier(random_state=0, max_depth=100, max_features='auto'),
             RandomForestClassifier(
-                n_estimators=250, random_state=0, n_jobs=int(njobs), max_depth=50, oob_score=True, bootstrap=True
+                # default
+                # n_estimators=250, max_depth=50, oob_score=True, bootstrap=True
+                # optimized
+                bootstrap=True, min_samples_leaf=1, n_estimators=789, min_samples_split=10, criterion='entropy',
+                max_features='sqrt', max_depth=22, class_weight='balanced',
+                random_state=0, n_jobs=int(njobs),
             ),
             MLPClassifier(alpha=1, random_state=0),
             # AdaBoostClassifier(DecisionTreeClassifier(max_depth=50), n_estimators=300, random_state=0),
@@ -1528,7 +1530,12 @@ class calcWithCustomHyperparams(baseMetrics):
             # GaussianProcessClassifier(1.0 * RBF(1.0), n_jobs=3, warm_start=True),
             DecisionTreeClassifier(random_state=0, max_depth=100, max_features='auto'),
             RandomForestClassifier(
-                n_estimators=250, random_state=0, n_jobs=int(njobs), max_depth=50, oob_score=True, bootstrap=True
+                # default
+                # n_estimators=250, max_depth=50, oob_score=True, bootstrap=True
+                # optimized
+                bootstrap=True, min_samples_leaf=1, n_estimators=789, min_samples_split=10, criterion='entropy',
+                max_features='sqrt', max_depth=22, class_weight='balanced',
+                random_state=0, n_jobs=int(njobs),
             ),
             MLPClassifier(alpha=1, random_state=0),
             # AdaBoostClassifier(DecisionTreeClassifier(max_depth=50), n_estimators=300, random_state=0),
