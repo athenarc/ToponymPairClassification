@@ -157,7 +157,7 @@ class Evaluator:
                             fX = np.asarray(map(self.compute_features, X['s1'], X['s2']))
 
                         separator = ' and threshold: '
-                        for i in range(30, 91, 5):
+                        for i in range(30, 86, 5):
                             print('{0} {1}'.format(separator, float(i / 100.0)), end='')
                             sys.stdout.flush()
                             separator = ','

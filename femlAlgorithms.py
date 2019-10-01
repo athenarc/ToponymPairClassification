@@ -82,7 +82,7 @@ def ascii_transliteration_and_punctuation_strip(s):
     return s
 
 
-def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' '):
+def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' ', sort_thres=0.45):
     a = strA.decode('utf8') #.lower()
     b = strB.decode('utf8') #.lower()
 
@@ -94,12 +94,14 @@ def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimi
         tmp_a = a.replace(' ', '')
         tmp_b = b.replace(' ', '')
 
-        if StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b) < StaticValues.algorithms['damerau_levenshtein'](a, b): #thres:
+        sim_concatenated = StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b)
+        sim_orig = StaticValues.algorithms['damerau_levenshtein'](a, b)
+        if sim_concatenated < sort_thres:
             a = " ".join(sorted_nicely(a.split(delimiter)))
             b = " ".join(sorted_nicely(b.split(delimiter)))
-        # elif StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b) > StaticValues.algorithms['damerau_levenshtein'](a, b):
-        #     a = tmp_a
-        #     b = tmp_b
+        elif sim_concatenated > sim_orig:
+            a = tmp_a
+            b = tmp_b
 
     if stemming:
         a = perform_stemming(a)

@@ -135,19 +135,18 @@ class StaticValues:
         }],
         ["Davis and De Salles", {
             'orig': 0.65, 'sorted': 0.7, 'orig_onlylatin': 0.6, 'sorted_onlylatin': 0.65,
-            'orig_latin_EU/NA': 0.65, 'sorted_latin_EU/NA': 0.65, 'orig_all': 0.65,
-            'sorted_all': 0.65
+            'orig_latin_EU/NA': 0.65, 'sorted_latin_EU/NA': 0.65, 'orig_all': 0.65, 'sorted_all': 0.65
         }],
         ["LinkGeoML Jaro-Winkler", {
             'orig': 0.7, 'sorted': 0.85, 'orig_onlylatin': 0.70, 'sorted_onlylatin': 0.7,
-            'orig_latin_EU/NA': 0.7, 'sorted_latin_EU/NA': 0.7, 'orig_all': 0.7,
-            'sorted_all': 0.75
+            'orig_latin_EU/NA': 0.7, 'sorted_latin_EU/NA': 0.7, 'orig_all': 0.75, 'sorted_all': 0.75
         }],
         ["LinkGeoML Jaro-Winkler reversed", {
             'orig': 0.75, 'sorted': 0.75, 'orig_onlylatin': 0.75, 'sorted_onlylatin': 0.75,
-            'orig_latin_EU/NA': 0.75, 'sorted_latin_EU/NA': 0.8, 'orig_all': 0.8, 'sorted_all': 0.8
+            'orig_latin_EU/NA': 0.75, 'sorted_latin_EU/NA': 0.75, 'orig_all': 0.8, 'sorted_all': 0.8
         }],
 
+        # LGM Sims
         ["LinkGeoML Similarity", {
             'orig': 0.4, 'sorted': 0.35, 'orig_onlylatin': 0.35, 'sorted_onlylatin': 0.35,
             'orig_latin_EU/NA': 0.4, 'sorted_latin_EU/NA': 0.55, 'orig_all': 0.55,
