@@ -457,7 +457,7 @@ class calcSotAMetrics(baseMetrics):
         tot_res += self._generic_evaluator(15, 'l_jaro_winkler', a[::-1], b[::-1], flag_true_match, custom_thres)
         if sorting:
             tot_res += self._generic_evaluator(16, 'lsimilarity', a, b, flag_true_match, custom_thres)
-            tot_res += self._generic_evaluator(17, 'avg_lsimilarity', a, b, flag_true_match, custom_thres)
+            tot_res += self._generic_evaluator(29, 'avg_lsimilarity', a, b, flag_true_match, custom_thres)
 
         if self.accuracyresults:
             if self.file is None:
@@ -2041,12 +2041,12 @@ class calcLSimilarities(baseMetrics):
     def __init__(self, njobs, accures):
         super(calcLSimilarities, self).__init__(len(StaticValues.methods), njobs, accures)
 
-    def _generic_evaluator(self, idx, sim_metric_used, str1, str2, is_a_match, custom_thres):
+    def _generic_evaluator(self, idx, lgm_metric, str1, str2, is_a_match, custom_thres):
         tot_res = ""
 
-        for alg_info in [[1, 'avg_lsimilarity']]:
+        for alg_info in [[13, 'avg_lsimilarity']]:
             start_time = time.time()
-            sim_val = StaticValues.algorithms[alg_info[1]](str1, str2, method=sim_metric_used)
+            sim_val = StaticValues.algorithms[alg_info[1]](str1, str2, method=lgm_metric)
             res, varnm = self.prediction(idx + alg_info[0], sim_val, is_a_match, custom_thres)
             self.timers[idx + alg_info[0] - 1] += (time.time() - start_time)
             self.predictedState[varnm][idx + alg_info[0] - 1] += 1.0
@@ -2062,18 +2062,18 @@ class calcLSimilarities(baseMetrics):
         a, b = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical)
 
         tot_res += self._generic_evaluator(16, 'damerau_levenshtein', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(26, 'jaccard', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(18, 'jaro', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(20, 'jaro_winkler', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(22, 'jaro_winkler', a[::-1], b[::-1], flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(32, 'monge_elkan', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(24, 'cosine', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(28, 'strike_a_match', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(34, 'soft_jaccard', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(30, 'skipgram', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(36, 'davies', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(38, 'l_jaro_winkler', a, b, flag_true_match, custom_thres)
-        tot_res += self._generic_evaluator(40, 'l_jaro_winkler', a[::-1], b[::-1], flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(21, 'jaccard', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(17, 'jaro', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(18, 'jaro_winkler', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(19, 'jaro_winkler', a[::-1], b[::-1], flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(24, 'monge_elkan', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(20, 'cosine', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(22, 'strike_a_match', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(25, 'soft_jaccard', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(23, 'skipgram', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(26, 'davies', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(27, 'l_jaro_winkler', a, b, flag_true_match, custom_thres)
+        tot_res += self._generic_evaluator(28, 'l_jaro_winkler', a[::-1], b[::-1], flag_true_match, custom_thres)
 
         if self.accuracyresults:
             if self.file is None:
