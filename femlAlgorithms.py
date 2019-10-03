@@ -871,16 +871,20 @@ class calcCustomFEMLExtended(baseMetrics):
                 # default
                 # n_estimators=250, max_depth=50, oob_score=True, bootstrap=True
                 # optimized
-                bootstrap=True, min_samples_leaf=1, n_estimators=789, min_samples_split=10, criterion='entropy',
-                max_features='sqrt', max_depth=22, class_weight='balanced',
-                random_state=0, n_jobs=int(njobs),
+                **config.MLConf.clf_static_params['RandomForest']
             ),
             MLPClassifier(alpha=1, random_state=0),
             # AdaBoostClassifier(DecisionTreeClassifier(max_depth=50), n_estimators=300, random_state=0),
             GaussianNB(),
             # QuadraticDiscriminantAnalysis(), LinearDiscriminantAnalysis(),
-            ExtraTreesClassifier(n_estimators=100, random_state=0, n_jobs=int(njobs), max_depth=50),
-            XGBClassifier(n_estimators=3000, seed=0, nthread=int(njobs)),
+            ExtraTreesClassifier(
+                # n_estimators=100, random_state=0, n_jobs=int(njobs), max_depth=50
+                **config.MLConf.clf_static_params['ExtraTrees']
+            ),
+            XGBClassifier(
+                # n_estimators=3000, seed=0, nthread=int(njobs)
+                **config.MLConf.clf_static_params['XGBoost']
+            ),
         ]
         self.scores = [[] for _ in range(len(self.classifiers))]
         self.importances = dict()
