@@ -186,14 +186,14 @@ class MLConf:
         'class_weight': ['balanced', None],
     }
     XGBoost_hyperparameters_dist = {
-        "n_estimators": sp_randint(500, 4000),
+        "n_estimators": sp_randint(200, 4000),
         'eta': expon(loc=0.01, scale=0.1),  # 'learning_rate'
         # hyperparameters to avoid overfitting
-        'max_depth': sp_randint(3, 100),
+        'max_depth': sp_randint(3, 60),
         'gamma': sp_randint(1, 5),
-        'subsample': truncnorm(0.7, 1),
-        'colsample_bytree': truncnorm(0, 1),
-        'min_child_weight': sp_randint(1, 10),
+        'subsample': truncnorm(0.3, 0.8),
+        'colsample_bytree': truncnorm(0.3, 0.8),
+        'min_child_weight': sp_randint(1, 6),
     }
     MLP_hyperparameters_dist = {
         'learning_rate_init': expon(loc=0.0001, scale=0.1),
