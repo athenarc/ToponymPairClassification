@@ -68,6 +68,7 @@ class MLConf:
 
     train_score = False
     stopping_rounds = 30
+    features_to_select = 20
 
     # accepted values: randomized, grid, hyperband - not yet implemented!!!
     hyperparams_search_method = 'grid'

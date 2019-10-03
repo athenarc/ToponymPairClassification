@@ -31,6 +31,7 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC, LinearSVC
+from sklearn.pipeline import Pipeline
 
 # We'll use this library to make the display pretty
 from tabulate import tabulate
@@ -120,6 +121,14 @@ def transform_str(s, stemming=False, canonical=False, delimiter=' '):
         a = perform_stemming(a)
 
     return a
+
+
+class PipelineRFE(Pipeline):
+
+    def fit(self, X, y=None, **fit_params):
+        super(PipelineRFE, self).fit(X, y, **fit_params)
+        self.feature_importances_ = self.steps[-1][-1].feature_importances_
+        return self
 
 
 class FEMLFeatures:
@@ -979,21 +988,25 @@ class calcCustomFEMLExtended(baseMetrics):
             )
             feature21 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'cosine', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaccard'][lsim_baseThres][0]
+            )
+            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaccard', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['monge_elkan'][lsim_baseThres][0]
             )
-            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
+            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler'][lsim_baseThres][0]
             )
-            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
+            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro'][lsim_baseThres][0]
             )
-            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
+            feature25 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature25 = weighted_terms(
+            feature26 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1005,11 +1018,11 @@ class calcCustomFEMLExtended(baseMetrics):
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler'][lsim_baseThres][0]
             )
-            feature26 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
+            feature27 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature27 = weighted_terms(
+            feature28 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1026,7 +1039,7 @@ class calcCustomFEMLExtended(baseMetrics):
             #                    feature25, feature26, feature27])
             # else:
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27])
+                           feature25, feature26, feature27, feature28])
 
         start_time = time.time()
 
@@ -1204,21 +1217,25 @@ class calcCustomFEMLExtended(baseMetrics):
             )
             feature21 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'cosine', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaccard'][lsim_baseThres][0]
+            )
+            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaccard', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['monge_elkan'][lsim_baseThres][0]
             )
-            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
+            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler'][lsim_baseThres][0]
             )
-            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
+            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro'][lsim_baseThres][0]
             )
-            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
+            feature25 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature25 = weighted_terms(
+            feature26 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1230,11 +1247,11 @@ class calcCustomFEMLExtended(baseMetrics):
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler'][lsim_baseThres][0]
             )
-            feature26 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
+            feature27 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature27 = weighted_terms(
+            feature28 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1247,7 +1264,7 @@ class calcCustomFEMLExtended(baseMetrics):
             self.timer += (time.time() - start_time)
 
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27])
+                           feature25, feature26, feature27, feature28])
 
         start_time = time.time()
 
@@ -1333,11 +1350,13 @@ class calcCustomFEMLExtended(baseMetrics):
 
             clf_abbr = StaticValues.classifiers_abbr[name]
             model = self.classifiers[clf_abbr]
+            selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
 
             print('Running cv for {}...'.format(name))
             if self.search_method.lower() == 'grid':
-                clf = GridSearchCV(
-                    clf_names[clf_abbr][0](), clf_names[clf_abbr][1],
+                cv = GridSearchCV(
+                    clf_names[clf_abbr][0](),
+                    clf_names[clf_abbr][1],
                     cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, return_train_score=config.MLConf.train_score
                 )
@@ -1350,26 +1369,48 @@ class calcCustomFEMLExtended(baseMetrics):
             #         cv=self.inner_cv, random_state=seed_no, scoring=score
             #     )
             else:  # randomized is used as default
-                clf = RandomizedSearchCV(
-                    clf_names[clf_abbr][0](), clf_names[clf_abbr][2],
+                cv = RandomizedSearchCV(
+                    clf_names[clf_abbr][0](),
+                    clf_names[clf_abbr][2],
                     cv=self.outer_cv, scoring='accuracy', verbose=1,
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
-            clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
+            # clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
+            pipe_params = [('select', selector), ('clf', cv)]
+            # pipe_params = [ ('clf', cv)]
+            pipe_clf = Pipeline(pipe_params)
+            pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
 
             hyperparams_found = dict()
-            hyperparams_found['score'] = clf.best_score_
-            hyperparams_found['results'] = clf.cv_results_
+            # hyperparams_found['score'] = clf.best_score_
+            # hyperparams_found['results'] = clf.cv_results_
+            # # hyperparams_found['test_len'] = [len(test) for _, test in self.outer_cv.split(X_train, y_train)]
+            # hyperparams_found['hyperparams'] = clf.best_params_
+            # hyperparams_found['estimator'] = clf.best_estimator_
+            # hyperparams_found['classifier'] = name
+            # hyperparams_found['scorers'] = clf.scorer_
+
+            hyperparams_found['score'] = pipe_clf.named_steps['clf'].best_score_
+            hyperparams_found['results'] = pipe_clf.named_steps['clf'].cv_results_
             # hyperparams_found['test_len'] = [len(test) for _, test in self.outer_cv.split(X_train, y_train)]
-            hyperparams_found['hyperparams'] = clf.best_params_
-            hyperparams_found['estimator'] = clf.best_estimator_
+            hyperparams_found['hyperparams'] = pipe_clf.named_steps['clf'].best_params_
+            hyperparams_found['estimator'] = pipe_clf.named_steps['clf'].best_estimator_
             hyperparams_found['classifier'] = name
-            hyperparams_found['scorers'] = clf.scorer_
 
             hyperparams_data.append(hyperparams_found)
 
             _, best_clf = max(enumerate(hyperparams_data), key=(lambda x: x[1]['score']))
             print(best_clf['hyperparams'])
+
+            feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_
+            feature_names = np.asarray(StaticValues.featureColumns)  # transformed list to array
+            support = pipe_clf.named_steps['select'].support_
+
+            print(feature_importances)
+            print('features selected: {}'.format(
+                {k: v for k,v in zip(feature_names[support], feature_importances)}
+            ))
+            print('features flags: {}'.format(support))
 
             train_time = 0
             predictedL = list()
@@ -1392,26 +1433,29 @@ class calcCustomFEMLExtended(baseMetrics):
             #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
 
             # model.fit(X_train, y_train)
+
             best_clf['estimator'].fit(np.asarray(self.train_X), self.train_Y)
+            # print(best_clf['estimator'].feature_importances_)
             train_time += (time.time() - start_time)
 
             start_time = time.time()
             # predictedL += list(model.predict(X_pred))
+            # self.test_X = pipe_clf.transform(self.test_X)
             predictedL += list(best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
-            if hasattr(model, "feature_importances_"):
+            if hasattr(best_clf['estimator'], "feature_importances_"):
                 # self.importances[i] += model.feature_importances_
                 if clf_abbr not in self.importances:
                     self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
 
-                for idx, val in zip([i for i, x in enumerate(features_supported) if x], model.feature_importances_):
+                for idx, val in zip([i for i, x in enumerate(features_supported) if x], best_clf['estimator'].feature_importances_):
                     self.importances[clf_abbr][idx] += val
-            elif hasattr(model, "coef_"):
+            elif hasattr(best_clf['estimator'], "coef_"):
                 if clf_abbr in self.importances:
-                    self.importances[clf_abbr] += model.coef_.ravel()
+                    self.importances[clf_abbr] += best_clf['estimator'].coef_.ravel()
                 else:
-                    self.importances[clf_abbr] = model.coef_.ravel()
+                    self.importances[clf_abbr] = best_clf['estimator'].coef_.ravel()
             # self.scores[i].append(model.score(np.array(pred_X), np.array(pred_Y)))
             # if name in ['rf']:
             #     print('R^2 Training Score: {:.2f} \nOOB Score: {:.2f} \nR^2 Validation Score: {:.2f}'.format(
@@ -1651,21 +1695,25 @@ class calcWithCustomHyperparams(baseMetrics):
             )
             feature21 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'cosine', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaccard'][lsim_baseThres][0]
+            )
+            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaccard', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['monge_elkan'][lsim_baseThres][0]
             )
-            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
+            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler'][lsim_baseThres][0]
             )
-            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
+            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro'][lsim_baseThres][0]
             )
-            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
+            feature25 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature25 = weighted_terms(
+            feature26 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1677,11 +1725,11 @@ class calcWithCustomHyperparams(baseMetrics):
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler'][lsim_baseThres][0]
             )
-            feature26 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
+            feature27 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature27 = weighted_terms(
+            feature28 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1698,7 +1746,7 @@ class calcWithCustomHyperparams(baseMetrics):
             #                    feature25, feature26, feature27])
             # else:
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27])
+                           feature25, feature26, feature27, feature28])
 
             start_time = time.time()
 
@@ -1822,21 +1870,25 @@ class calcWithCustomHyperparams(baseMetrics):
             )
             feature21 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'cosine', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaccard'][lsim_baseThres][0]
+            )
+            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaccard', flag)
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['monge_elkan'][lsim_baseThres][0]
             )
-            feature22 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
+            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'monge_elkan', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler'][lsim_baseThres][0]
             )
-            feature23 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
+            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro'][lsim_baseThres][0]
             )
-            feature24 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
+            feature25 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'jaro', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature25 = weighted_terms(
+            feature26 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1848,11 +1900,11 @@ class calcWithCustomHyperparams(baseMetrics):
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler'][lsim_baseThres][0]
             )
-            feature26 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
+            feature27 = weighted_terms(baseTerms, mismatchTerms, specialTerms, 'l_jaro_winkler', flag)
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['l_jaro_winkler_r'][lsim_baseThres][0]
             )
-            feature27 = weighted_terms(
+            feature28 = weighted_terms(
                 {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']],
                  'len': baseTerms['len'], 'char_len': baseTerms['char_len']},
                 {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']],
@@ -1869,7 +1921,7 @@ class calcWithCustomHyperparams(baseMetrics):
             #                    feature25, feature26, feature27])
             # else:
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27])
+                           feature25, feature26, feature27, feature28])
 
             start_time = time.time()
 
