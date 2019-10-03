@@ -95,8 +95,8 @@ class MLConf:
             'random_state': seed_no,
         },
         'RandomForest': {
-            'bootstrap': False, 'criterion': 'gini', 'max_depth': 15, 'max_features': 'sqrt', 'min_samples_leaf': 1,
-            'min_samples_split': 2, 'n_estimators': 628,
+            'bootstrap': True, 'min_samples_leaf': 1, 'n_estimators': 789, 'min_samples_split': 10,
+            'criterion': 'entropy', 'max_features': 'sqrt', 'max_depth': 22, 'class_weight': 'balanced',
             'random_state': seed_no, 'n_jobs': n_jobs,  # 'oob_score': True,
         },
         'ExtraTrees': {
