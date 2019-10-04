@@ -1361,7 +1361,7 @@ class calcCustomFEMLExtended(baseMetrics):
                 cv = GridSearchCV(
                     clf_names[clf_abbr][0](),
                     clf_names[clf_abbr][1],
-                    cv=self.outer_cv, scoring='accuracy', verbose=1, pre_dispatch='2*n_jobs',
+                    cv=self.outer_cv, scoring='accuracy', verbose=1, pre_dispatch='n_jobs',
                     n_jobs=self.n_jobs, return_train_score=config.MLConf.train_score
                 )
             # elif self.search_method.lower() == 'hyperband' and clf_key in ['XGBoost', 'Extra-Trees', 'Random Forest']:
@@ -1376,7 +1376,7 @@ class calcCustomFEMLExtended(baseMetrics):
                 cv = RandomizedSearchCV(
                     clf_names[clf_abbr][0](),
                     clf_names[clf_abbr][2],
-                    cv=self.outer_cv, scoring='accuracy', verbose=1,  pre_dispatch='2*n_jobs',
+                    cv=self.outer_cv, scoring='accuracy', verbose=1,  pre_dispatch='n_jobs',
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
             # clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
