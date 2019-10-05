@@ -81,32 +81,38 @@ class Evaluator:
                     )
             print("Features build on train dataset on {:.4f} sec".format(time.time() - start_time))
 
-            if hasattr(self.evalClass, "load_test_dataset"):
-                self.evalClass.reset()
-
-                start_time = time.time()
-                print("Reading test dataset...")
-                with open(os.path.join(os.path.abspath(os.path.dirname(__main__.__file__)), config.test_dataset)) as csvfile:
-                    reader = csv.DictReader(csvfile,
-                                            fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
-                                            delimiter='\t')
-
-                    thres_type = 'orig'
-                    if self.sorting:
-                        thres_type = 'sorted'
-                    if self.latin:
-                        # thres_type += '_onlylatin'
-                        thres_type += '_latin_EU/NA'
-                    if self.encoding:
-                        thres_type += '_all'
-
-                    for row in reader:
-                        self.evalClass.load_test_dataset(
-                            row, self.sorting, self.stemming, self.canonical, self.permuted, thres_type
-                        )
-                print("Features build on test dataset on {:.4f} sec".format(time.time() - start_time))
-
             if hasattr(self.evalClass, "train_classifiers"):
+                if hasattr(self.evalClass, "perform_cv"):
+                    start_time = time.time()
+                    self.evalClass.perform_cv(self.ml_algs, polynomial=False, standardize=True)
+                    print("CV took {:.4f} sec".format(time.time() - start_time))
+
+                if hasattr(self.evalClass, "load_test_dataset"):
+                    self.evalClass.reset()
+
+                    start_time = time.time()
+                    print("Reading test dataset...")
+                    with open(os.path.join(os.path.abspath(os.path.dirname(__main__.__file__)),
+                                           config.test_dataset)) as csvfile:
+                        reader = csv.DictReader(csvfile,
+                                                fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
+                                                delimiter='\t')
+
+                        thres_type = 'orig'
+                        if self.sorting:
+                            thres_type = 'sorted'
+                        if self.latin:
+                            # thres_type += '_onlylatin'
+                            thres_type += '_latin_EU/NA'
+                        if self.encoding:
+                            thres_type += '_all'
+
+                        for row in reader:
+                            self.evalClass.load_test_dataset(
+                                row, self.sorting, self.stemming, self.canonical, self.permuted, thres_type
+                            )
+                    print("Features build on test dataset on {:.4f} sec".format(time.time() - start_time))
+
                 self.evalClass.train_classifiers(self.ml_algs, polynomial=False, standardize=True, fs_method=feature_selection, features=lFeatures)
             self.evalClass.print_stats()
 

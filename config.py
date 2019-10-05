@@ -84,8 +84,9 @@ class MLConf:
 
     clf_static_params = {
         'SVM': {
-            'C': 145.30455255834553, 'class_weight': 'balanced', 'degree': 1, 'gamma': 0.3372999022968335,
-            'kernel': 'sigmoid', 'max_iter': 3000, 'tol': 0.001,
+            'C': 145.30455255834553, 'class_weight': 'balanced',
+            # 'kernel': 'sigmoid', 'degree': 1, 'gamma': 0.3372999022968335,
+            'max_iter': 3000, 'tol': 0.001,
             'random_state': seed_no
         },
         'DecisionTree': {

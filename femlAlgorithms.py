@@ -862,11 +862,18 @@ class calcCustomFEMLExtended(baseMetrics):
         self.train_Y = []
         self.test_X = []
         self.test_Y = []
+        self.best_clf = {}
 
         self.classifiers = [
-            LinearSVC(random_state=0, C=1.0, max_iter=3000),
+            LinearSVC(
+                # random_state=0, C=1.0, max_iter=3000
+                **config.MLConf.clf_static_params['SVM']
+            ),
             # GaussianProcessClassifier(1.0 * RBF(1.0), n_jobs=3, warm_start=True),
-            DecisionTreeClassifier(random_state=0, max_depth=100, max_features='auto'),
+            DecisionTreeClassifier(
+                # random_state=0, max_depth=100, max_features='auto'
+                **config.MLConf.clf_static_params['DecisionTree']
+            ),
             RandomForestClassifier(
                 # default
                 # n_estimators=250, max_depth=50, oob_score=True, bootstrap=True
@@ -1136,7 +1143,7 @@ class calcCustomFEMLExtended(baseMetrics):
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
         else:
-            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
+            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
         if self.file is None and self.accuracyresults:
             file_name = 'dataset-accuracyresults-sim-metrics'
@@ -1328,20 +1335,9 @@ class calcCustomFEMLExtended(baseMetrics):
         # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
         # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
 
-        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
+        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
-    def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
-        # if polynomial:
-        #     self.X1 = PolynomialFeatures().fit_transform(self.X1)
-        #     self.X2 = PolynomialFeatures().fit_transform(self.X2)
-        # if standardize:
-        #     # self.X1 = StandardScaler().fit_transform(self.X1)
-        #     # self.X2 = StandardScaler().fit_transform(self.X2)
-        #     # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
-        #     self.train_X = MinMaxScaler().fit_transform(self.train_X)
-        #     self.test_X = MinMaxScaler().fit_transform(self.test_X)
-        #     # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
-
+    def perform_cv(self, ml_algs, polynomial=False, standardize=False):
         # iterate over classifiers
         if set(ml_algs) != {'all'}: self.mlalgs_to_run = ml_algs
 
@@ -1353,7 +1349,6 @@ class calcCustomFEMLExtended(baseMetrics):
                 continue
 
             clf_abbr = StaticValues.classifiers_abbr[name]
-            print(clf_abbr)
             model = self.classifiers[clf_abbr]
             selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
             scaler = MinMaxScaler()
@@ -1364,22 +1359,14 @@ class calcCustomFEMLExtended(baseMetrics):
                 cv = GridSearchCV(
                     clf_names[clf_abbr][0](),
                     clf_names[clf_abbr][1],
-                    cv=self.outer_cv, scoring='accuracy', verbose=1, pre_dispatch='n_jobs',
+                    cv=self.outer_cv, scoring='accuracy', verbose=1, pre_dispatch='2*n_jobs',
                     n_jobs=self.n_jobs, return_train_score=config.MLConf.train_score
                 )
-            # elif self.search_method.lower() == 'hyperband' and clf_key in ['XGBoost', 'Extra-Trees', 'Random Forest']:
-            #     HyperbandSearchCV(
-            #         clf_val[0](probability=True) if clf_key == 'SVM' else clf_val[0](), clf_val[2].copy().pop('n_estimators'),
-            #         resource_param='n_estimators',
-            #         min_iter=500 if clf_key == 'XGBoost' else 200,
-            #         max_iter=3000 if clf_key == 'XGBoost' else 1000,
-            #         cv=self.inner_cv, random_state=seed_no, scoring=score
-            #     )
             else:  # randomized is used as default
                 cv = RandomizedSearchCV(
                     clf_names[clf_abbr][0](),
                     clf_names[clf_abbr][2],
-                    cv=self.outer_cv, scoring='accuracy', verbose=1,  pre_dispatch='n_jobs',
+                    cv=self.outer_cv, scoring='accuracy', verbose=1,  pre_dispatch='2*n_jobs',
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
             # clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
@@ -1399,15 +1386,14 @@ class calcCustomFEMLExtended(baseMetrics):
 
             hyperparams_found['score'] = pipe_clf.named_steps['clf'].best_score_
             hyperparams_found['results'] = pipe_clf.named_steps['clf'].cv_results_
-            # hyperparams_found['test_len'] = [len(test) for _, test in self.outer_cv.split(X_train, y_train)]
             hyperparams_found['hyperparams'] = pipe_clf.named_steps['clf'].best_params_
             hyperparams_found['estimator'] = pipe_clf.named_steps['clf'].best_estimator_
             hyperparams_found['classifier'] = name
 
             hyperparams_data.append(hyperparams_found)
 
-            _, best_clf = max(enumerate(hyperparams_data), key=(lambda x: x[1]['score']))
-            print('score: {}, hyperparams: {}'.format(best_clf['score'], best_clf['hyperparams']))
+            _, self.best_clf = max(enumerate(hyperparams_data), key=(lambda x: x[1]['score']))
+            print('score: {}, hyperparams: {}'.format(self.best_clf['score'], self.best_clf['hyperparams']))
 
             feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_
             feature_names = np.asarray(StaticValues.featureColumns)  # transformed list to array
@@ -1415,9 +1401,36 @@ class calcCustomFEMLExtended(baseMetrics):
 
             print(feature_importances)
             print('features selected: {}'.format(
-                {k: v for k,v in zip(feature_names[support], feature_importances)}
+                {k: v for k, v in zip(feature_names[support], feature_importances)}
             ))
             print('features flags: {}'.format(support))
+
+    def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
+        # if polynomial:
+        #     self.X1 = PolynomialFeatures().fit_transform(self.X1)
+        #     self.X2 = PolynomialFeatures().fit_transform(self.X2)
+        # if standardize:
+        #     # self.X1 = StandardScaler().fit_transform(self.X1)
+        #     # self.X2 = StandardScaler().fit_transform(self.X2)
+        #     # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
+        #     self.train_X = MinMaxScaler().fit_transform(self.train_X)
+        #     self.test_X = MinMaxScaler().fit_transform(self.test_X)
+        #     # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
+
+        # iterate over classifiers
+        if set(ml_algs) != {'all'}: self.mlalgs_to_run = ml_algs
+
+        # for i, (name, clf) in enumerate(zip(self.names, self.classifiers)):
+        for name in self.mlalgs_to_run:
+            if name not in StaticValues.classifiers_abbr.keys():
+                print('{} is not a valid ML algorithm'.format(name))
+                continue
+
+            clf_abbr = StaticValues.classifiers_abbr[name]
+            # model = self.classifiers[clf_abbr]
+            # selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            # scaler = MinMaxScaler()
+            # # scaler = StandardScaler()
 
             train_time = 0
             predictedL = list()
@@ -1440,29 +1453,29 @@ class calcCustomFEMLExtended(baseMetrics):
             #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
 
             # model.fit(X_train, y_train)
-
-            best_clf['estimator'].fit(np.asarray(self.train_X), self.train_Y)
+            # print('outside cv hyperparams: {}'.format(self.best_clf['estimator'].get_params()))
+            self.best_clf['estimator'].fit(np.asarray(self.train_X), self.train_Y)
             # print(best_clf['estimator'].feature_importances_)
             train_time += (time.time() - start_time)
 
             start_time = time.time()
             # predictedL += list(model.predict(X_pred))
             # self.test_X = pipe_clf.transform(self.test_X)
-            predictedL += list(best_clf['estimator'].predict(self.test_X))
+            predictedL += list(self.best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
-            if hasattr(best_clf['estimator'], "feature_importances_"):
+            if hasattr(self.best_clf['estimator'], "feature_importances_"):
                 # self.importances[i] += model.feature_importances_
                 if clf_abbr not in self.importances:
                     self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
 
-                for idx, val in zip([i for i, x in enumerate(features_supported) if x], best_clf['estimator'].feature_importances_):
+                for idx, val in zip([i for i, x in enumerate(features_supported) if x], self.best_clf['estimator'].feature_importances_):
                     self.importances[clf_abbr][idx] += val
-            elif hasattr(best_clf['estimator'], "coef_"):
+            elif hasattr(self.best_clf['estimator'], "coef_"):
                 if clf_abbr in self.importances:
-                    self.importances[clf_abbr] += best_clf['estimator'].coef_.ravel()
+                    self.importances[clf_abbr] += self.best_clf['estimator'].coef_.ravel()
                 else:
-                    self.importances[clf_abbr] = best_clf['estimator'].coef_.ravel()
+                    self.importances[clf_abbr] = self.best_clf['estimator'].coef_.ravel()
             # self.scores[i].append(model.score(np.array(pred_X), np.array(pred_Y)))
             # if name in ['rf']:
             #     print('R^2 Training Score: {:.2f} \nOOB Score: {:.2f} \nR^2 Validation Score: {:.2f}'.format(
@@ -1579,23 +1592,33 @@ class calcWithCustomHyperparams(baseMetrics):
         self.test_Y = []
 
         self.classifiers = [
-            LinearSVC(random_state=0, C=1.0, max_iter=3000),
+            LinearSVC(
+                # random_state=0, C=1.0, max_iter=3000
+                **config.MLConf.clf_static_params['SVM']
+            ),
             # GaussianProcessClassifier(1.0 * RBF(1.0), n_jobs=3, warm_start=True),
-            DecisionTreeClassifier(random_state=0, max_depth=100, max_features='auto'),
+            DecisionTreeClassifier(
+                # random_state=0, max_depth=100, max_features='auto'
+                **config.MLConf.clf_static_params['DecisionTree']
+            ),
             RandomForestClassifier(
                 # default
                 # n_estimators=250, max_depth=50, oob_score=True, bootstrap=True
                 # optimized
-                bootstrap=True, min_samples_leaf=1, n_estimators=789, min_samples_split=10, criterion='entropy',
-                max_features='sqrt', max_depth=22, class_weight='balanced',
-                random_state=0, n_jobs=int(njobs),
+                **config.MLConf.clf_static_params['RandomForest']
             ),
             MLPClassifier(alpha=1, random_state=0),
             # AdaBoostClassifier(DecisionTreeClassifier(max_depth=50), n_estimators=300, random_state=0),
             GaussianNB(),
             # QuadraticDiscriminantAnalysis(), LinearDiscriminantAnalysis(),
-            ExtraTreesClassifier(n_estimators=100, random_state=0, n_jobs=int(njobs), max_depth=50),
-            XGBClassifier(n_estimators=3000, seed=0, nthread=int(njobs)),
+            ExtraTreesClassifier(
+                # n_estimators=100, random_state=0, n_jobs=int(njobs), max_depth=50
+                **config.MLConf.clf_static_params['ExtraTrees']
+            ),
+            XGBClassifier(
+                # n_estimators=3000, seed=0, nthread=int(njobs)
+                **config.MLConf.clf_static_params['XGBoost']
+            ),
         ]
         # self.scores = [[] for _ in range(len(self.classifiers))]
         self.importances = dict()
@@ -1791,7 +1814,7 @@ class calcWithCustomHyperparams(baseMetrics):
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
         else:
-            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
+            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
         if self.file is None and self.accuracyresults:
             file_name = 'dataset-accuracyresults-sim-metrics'
@@ -1957,7 +1980,7 @@ class calcWithCustomHyperparams(baseMetrics):
                 # int(feature5_1), int(feature5_2)
             ])
 
-        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
+        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
         if polynomial:
@@ -1996,11 +2019,20 @@ class calcWithCustomHyperparams(baseMetrics):
             #     )
             #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
 
-            model.fit(np.asarray(self.train_X), self.train_Y)
+            selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            scaler = MinMaxScaler()
+            # scaler = StandardScaler()
+
+            pipe_params = [('scaler', scaler), ('select', selector)]
+            # pipe_params = [ ('clf', cv)]
+            pipe_clf = Pipeline(pipe_params)
+            pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
+            # model.fit(np.asarray(self.train_X), self.train_Y)
             train_time += (time.time() - start_time)
 
             start_time = time.time()
-            predictedL += list(model.predict(np.asarray(self.test_X)))
+
+            predictedL += list(pipe_clf.predict(self.test_X))
             # predictedL += list(best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
