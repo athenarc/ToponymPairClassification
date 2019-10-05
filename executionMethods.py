@@ -59,7 +59,9 @@ class Evaluator:
             self.evalClass.freq_terms_list(self.encoding)
 
             lFeatures = [(True if x == 'True' else False) for x in features.split(',')] if feature_selection is None and features is not None else features
-            print("Reading dataset...")
+
+            start_time = time.time()
+            print("Reading train dataset...")
             with open(dataset) as csvfile:
                 reader = csv.DictReader(csvfile, fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
                                         delimiter='\t')
@@ -77,8 +79,13 @@ class Evaluator:
                     self.evalClass.evaluate(
                         row, self.sorting, self.stemming, self.canonical, self.permuted, thres_type, lFeatures
                     )
+            print("Features build on train dataset on {:.4f} sec".format(time.time() - start_time))
+
             if hasattr(self.evalClass, "load_test_dataset"):
                 self.evalClass.reset()
+
+                start_time = time.time()
+                print("Reading test dataset...")
                 with open(os.path.join(os.path.abspath(os.path.dirname(__main__.__file__)), config.test_dataset)) as csvfile:
                     reader = csv.DictReader(csvfile,
                                             fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
@@ -97,6 +104,8 @@ class Evaluator:
                         self.evalClass.load_test_dataset(
                             row, self.sorting, self.stemming, self.canonical, self.permuted, thres_type
                         )
+                print("Features build on test dataset on {:.4f} sec".format(time.time() - start_time))
+
             if hasattr(self.evalClass, "train_classifiers"):
                 self.evalClass.train_classifiers(self.ml_algs, polynomial=False, standardize=True, fs_method=feature_selection, features=lFeatures)
             self.evalClass.print_stats()

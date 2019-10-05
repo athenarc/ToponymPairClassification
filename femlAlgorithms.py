@@ -26,7 +26,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.naive_bayes import GaussianNB
 # from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
-from sklearn.preprocessing import PolynomialFeatures, MinMaxScaler
+from sklearn.preprocessing import PolynomialFeatures, MinMaxScaler, StandardScaler
 from xgboost import XGBClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.model_selection import StratifiedKFold
@@ -734,7 +734,7 @@ class calcCustomFEML(baseMetrics):
             hyperparams_data.append(hyperparams_found)
 
             _, best_clf = max(enumerate(hyperparams_data), key=(lambda x: x[1]['score']))
-            print(best_clf['hyperparams'])
+            print('score: {}, hyperparams: {}'.format(best_clf['score'], best_clf['hyperparams']))
 
             train_time = 0
             predictedL = list()
@@ -1331,16 +1331,16 @@ class calcCustomFEMLExtended(baseMetrics):
         self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 4).tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
-        if polynomial:
-            self.X1 = PolynomialFeatures().fit_transform(self.X1)
-            self.X2 = PolynomialFeatures().fit_transform(self.X2)
-        if standardize:
-            # self.X1 = StandardScaler().fit_transform(self.X1)
-            # self.X2 = StandardScaler().fit_transform(self.X2)
-            # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
-            self.train_X = MinMaxScaler().fit_transform(self.train_X)
-            self.test_X = MinMaxScaler().fit_transform(self.test_X)
-            # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
+        # if polynomial:
+        #     self.X1 = PolynomialFeatures().fit_transform(self.X1)
+        #     self.X2 = PolynomialFeatures().fit_transform(self.X2)
+        # if standardize:
+        #     # self.X1 = StandardScaler().fit_transform(self.X1)
+        #     # self.X2 = StandardScaler().fit_transform(self.X2)
+        #     # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
+        #     self.train_X = MinMaxScaler().fit_transform(self.train_X)
+        #     self.test_X = MinMaxScaler().fit_transform(self.test_X)
+        #     # print(zip(*self.X1)[18][:10], '||', zip(*self.X2)[18][:10])
 
         # iterate over classifiers
         if set(ml_algs) != {'all'}: self.mlalgs_to_run = ml_algs
@@ -1353,8 +1353,11 @@ class calcCustomFEMLExtended(baseMetrics):
                 continue
 
             clf_abbr = StaticValues.classifiers_abbr[name]
+            print(clf_abbr)
             model = self.classifiers[clf_abbr]
             selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            scaler = MinMaxScaler()
+            # scaler = StandardScaler()
 
             print('Running cv for {}...'.format(name))
             if self.search_method.lower() == 'grid':
@@ -1380,7 +1383,7 @@ class calcCustomFEMLExtended(baseMetrics):
                     n_jobs=self.n_jobs, n_iter=self.n_iter, return_train_score=config.MLConf.train_score
                 )
             # clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
-            pipe_params = [('select', selector), ('clf', cv)]
+            pipe_params = [('scaler', scaler), ('select', selector), ('clf', cv)]
             # pipe_params = [ ('clf', cv)]
             pipe_clf = Pipeline(pipe_params)
             pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
@@ -1404,7 +1407,7 @@ class calcCustomFEMLExtended(baseMetrics):
             hyperparams_data.append(hyperparams_found)
 
             _, best_clf = max(enumerate(hyperparams_data), key=(lambda x: x[1]['score']))
-            print(best_clf['hyperparams'])
+            print('score: {}, hyperparams: {}'.format(best_clf['score'], best_clf['hyperparams']))
 
             feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_
             feature_names = np.asarray(StaticValues.featureColumns)  # transformed list to array
