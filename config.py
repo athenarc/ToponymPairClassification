@@ -64,14 +64,16 @@ class MLConf:
     #: int: The number of inner folds that splits the dataset for the k-fold cross-validation.
     kfold_inner_parameter = 4
 
-    n_jobs = 4  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
+    n_jobs = 8  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
 
     train_score = False
     stopping_rounds = 30
     features_to_select = 20
+    extra_features = False
+    pos_freqs = 20
 
     # accepted values: randomized, grid, hyperband - not yet implemented!!!
-    hyperparams_search_method = 'grid'
+    hyperparams_search_method = 'randomized'
     """str: Search Method to use for finding best hyperparameters. (*randomized* | *grid*).
     
     See Also
@@ -130,7 +132,7 @@ class MLConf:
         'min_samples_leaf': [1, 2, 4, 10],
         # 'min_samples_split': list(np.linspace(0.1, 1, 10)),
         # 'min_samples_leaf': list(np.linspace(0.1, 0.5, 5)),
-        'max_features': [list(np.linspace(2, 20, 10))] + ['auto', None],
+        'max_features': list(np.linspace(2, 20, 10)) + ['auto', None],
         'splitter': ('best', 'random'),
     }
     RandomForest_hyperparameters = {

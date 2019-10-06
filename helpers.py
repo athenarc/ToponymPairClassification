@@ -10,6 +10,7 @@ import pycountry
 from datasetcreator import damerau_levenshtein, jaccard, jaro, jaro_winkler, monge_elkan, cosine, \
     strike_a_match, soft_jaccard, sorted_winkler, permuted_winkler, skipgram, davies, l_jaro_winkler, lsimilarity, \
     avg_lsimilarity
+import config
 
 
 sys.path.append(os.path.abspath('../Toponym-Matching'))
@@ -344,20 +345,6 @@ class StaticValues:
         "LinkGeoML Jaro-Winkler reversed",
         # "LSimilarity",
         "LSimilarity_wavg",
-        # "contains_str1",
-        # "contains_str2",
-        # "WordsNo_str1",
-        # "WordsNo_str2",
-        # "dashed_str1",
-        # "dashed_str2",
-        # "hasFreqTerm_str1",
-        # "hasFreqTerm_str2",
-        # "posOfHigherSim_str1_start",
-        # "posOfHigherSim_str1_middle",
-        # "posOfHigherSim_str1_end",
-        # "posOfHigherSim_str2_start",
-        # "posOfHigherSim_str2_middle",
-        # "posOfHigherSim_str2_end",
         # "LSimilarity_davies",
         # "LSimilarity_skipgram",
         # "LSimilarity_soft_jaccard",
@@ -386,6 +373,23 @@ class StaticValues:
         "Avg LSimilarity_mismatchScore",
         "Avg LSimilarity_specialScore",
     ]
+
+    extraFeatures = [
+        # "contains_str1",
+        # "contains_str2",
+        "noTokens_s1",
+        "noTokens_s2",
+        # "dashed_str1",
+        # "dashed_str2",
+        "hasFTerms_s1",
+        "hasFTerms_s2",
+        # "posOfHigherSim_str1_start",
+        # "posOfHigherSim_str1_middle",
+        # "posOfHigherSim_str1_end",
+        # "posOfHigherSim_str2_start",
+        # "posOfHigherSim_str2_middle",
+        # "posOfHigherSim_str2_end",
+    ] + ['FreqTerm' + str(no) + '_s' + i for no in range(config.MLConf.pos_freqs) for i in ['1', '2']]
 
     MetricOptimalValues = {
         'latin': {

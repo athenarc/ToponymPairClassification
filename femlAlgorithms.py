@@ -192,20 +192,31 @@ class FEMLFeatures:
         return False if is_dashed is None else True
 
     @staticmethod
-    def no_of_words(str1, str2):
-        # str, _ = normalize_str(str)
-        return len(set(str1.split())), len(set(str2.split()))
+    def no_of_words(s1, s2):
+        return len(set(s1.split())), len(set(s2.split()))
 
     @staticmethod
-    def containsFreqTerms(str1, str2):
-        specialTerms = dict(a=[], b=[])
+    def containsFreqTerms(s1, s2):
+        # specialTerms = dict(a=[], b=[])
         # specialTerms['a'] = filter(lambda x: x in a, freq_terms)
         # specialTerms['b'] = filter(lambda x: x in b, freq_terms)
-        for idx, x in enumerate(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']):
-            if x in str1: specialTerms['a'].append([idx, x])
-            if x in str2: specialTerms['b'].append([idx, x])
+        # for idx, x in enumerate(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']):
+        #     if x in str1: specialTerms['a'].append([idx, x])
+        #     if x in str2: specialTerms['b'].append([idx, x])
 
-        return specialTerms['a'], specialTerms['b']
+        s1_flag = any(x in LSimilarityVars.freq_ngrams['tokens'] for x in s1.split())
+        s2_flag = any(x in LSimilarityVars.freq_ngrams['tokens'] for x in s2.split())
+        return s1_flag, s2_flag
+
+    @staticmethod
+    def positionalFreqTerms(s1, s2):
+        s1_terms = s1.split()
+        s2_terms = s2.split()
+
+        s1_pos = [x in s1_terms for x in list(LSimilarityVars.freq_ngrams['tokens'])[:config.MLConf.pos_freqs]]
+        s2_pos = [x in s2_terms for x in list(LSimilarityVars.freq_ngrams['tokens'])[:config.MLConf.pos_freqs]]
+
+        return s1_pos, s2_pos
 
     @staticmethod
     def ngram_tokens(tokens, ngram=1):
@@ -971,10 +982,11 @@ class calcCustomFEMLExtended(baseMetrics):
                 else: tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
             if flag: tmp_X2.append([sim16, sim17, sim15])
 
-        row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical)
-
         # for flag in list({False, True}):
-        for flag in list({True}):
+        if sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
+
             lsim_baseThres = 'avg' if flag else 'simple'
 
             start_time = time.time()
@@ -1052,93 +1064,97 @@ class calcCustomFEMLExtended(baseMetrics):
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
                            feature25, feature26, feature27, feature28])
 
-        start_time = time.time()
+            start_time = time.time()
 
-        method_nm = 'damerau_levenshtein'
-        baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
-            row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values[method_nm]['avg'][0])
-        feature1_1, feature1_2, feature1_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, method_nm)
+            method_nm = 'damerau_levenshtein'
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values[method_nm]['avg'][0])
+            feature1_1, feature1_2, feature1_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, method_nm)
 
-        # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
-        # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
-        # feature3_1, feature3_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
-        # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
-        # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
-        # fterms_s1, fterms_s2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
-        # feature5_1 = False if len(fterms_s1) == 0 else True
-        # feature5_2 = False if len(fterms_s2) == 0 else True
-        # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
-        # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-        # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-        # for x in fterms_s1: feature7_1[x[0]] = 1
-        # for x in fterms_s2: feature7_2[x[0]] = 1
+            # feature8_1, feature8_2, feature8_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'davies')
+            # feature9_1, feature9_2, feature9_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'skipgram')
+            # feature10_1, feature10_2, feature10_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'soft_jaccard')
+            # feature11_1, feature11_2, feature11_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'strike_a_match')
+            # feature12_1, feature12_2, feature12_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'cosine')
+            # feature13_1, feature13_2, feature13_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'monge_elkan')
+            # feature14_1, feature14_2, feature14_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler')
+            # feature15_1, feature15_2, feature15_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro')
+            # feature16_1, feature16_2, feature16_3 = score_per_term(
+            #     {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']]},
+            #     {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']]},
+            #     {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']]},
+            #     'jaro_winkler'
+            # )
 
-        # feature8_1, feature8_2, feature8_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'davies')
-        # feature9_1, feature9_2, feature9_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'skipgram')
-        # feature10_1, feature10_2, feature10_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'soft_jaccard')
-        # feature11_1, feature11_2, feature11_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'strike_a_match')
-        # feature12_1, feature12_2, feature12_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'cosine')
-        # feature13_1, feature13_2, feature13_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'monge_elkan')
-        # feature14_1, feature14_2, feature14_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler')
-        # feature15_1, feature15_2, feature15_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro')
-        # feature16_1, feature16_2, feature16_3 = score_per_term(
-        #     {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']]},
-        #     {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']]},
-        #     {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']]},
-        #     'jaro_winkler'
-        # )
+            self.timer += (time.time() - start_time)
 
-        self.timer += (time.time() - start_time)
+            # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
+            #     tmp_X1.append([
+            #         feature1_1, feature1_2, feature1_3,
+            #
+            #         # feature8_1, feature8_2, feature8_3,
+            #         # feature9_1, feature9_2, feature9_3,
+            #         # feature10_1, feature10_2, feature10_3,
+            #         # feature11_1, feature11_2, feature11_3,
+            #         # feature12_1, feature12_2, feature12_3,
+            #         # feature13_1, feature13_2, feature13_3,
+            #         # feature14_1, feature14_2, feature14_3,
+            #         # feature15_1, feature15_2, feature15_3,
+            #         # feature16_1, feature16_2, feature16_3,
+            #         # int(feature2_1), int(feature2_2),
+            #         # feature3_1, feature3_2,
+            #         # int(feature4_1), int(feature4_2),
+            #         # int(feature5_1), int(feature5_2)
+            #     ])
+            #     # tmp_X1.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
+            #     # tmp_X1.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
+            #     # self.X1[-1].extend(
+            #     #     feature7_1[:self.fterm_feature_size/2] + feature7_1[len(feature7_1)/2:self.fterm_feature_size/2] +
+            #     #     feature7_2[:self.fterm_feature_size/2] + feature7_2[len(feature7_2)/2:self.fterm_feature_size/2]
+            #     # )
+            #
+            #     if selectable_features is not None:
+            #         self.X1.append(list(compress(chain.from_iterable(tmp_X1), selectable_features)))
+            #     else:
+            #         self.X1.append(list(chain.from_iterable(tmp_X1)))
+            # else:
+            tmp_X2.append([
+                feature1_1, feature1_2, feature1_3,
 
-        # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
-        #     tmp_X1.append([
-        #         feature1_1, feature1_2, feature1_3,
-        #
-        #         # feature8_1, feature8_2, feature8_3,
-        #         # feature9_1, feature9_2, feature9_3,
-        #         # feature10_1, feature10_2, feature10_3,
-        #         # feature11_1, feature11_2, feature11_3,
-        #         # feature12_1, feature12_2, feature12_3,
-        #         # feature13_1, feature13_2, feature13_3,
-        #         # feature14_1, feature14_2, feature14_3,
-        #         # feature15_1, feature15_2, feature15_3,
-        #         # feature16_1, feature16_2, feature16_3,
-        #         # int(feature2_1), int(feature2_2),
-        #         # feature3_1, feature3_2,
-        #         # int(feature4_1), int(feature4_2),
-        #         # int(feature5_1), int(feature5_2)
-        #     ])
-        #     # tmp_X1.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
-        #     # tmp_X1.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
-        #     # self.X1[-1].extend(
-        #     #     feature7_1[:self.fterm_feature_size/2] + feature7_1[len(feature7_1)/2:self.fterm_feature_size/2] +
-        #     #     feature7_2[:self.fterm_feature_size/2] + feature7_2[len(feature7_2)/2:self.fterm_feature_size/2]
-        #     # )
-        #
-        #     if selectable_features is not None:
-        #         self.X1.append(list(compress(chain.from_iterable(tmp_X1), selectable_features)))
-        #     else:
-        #         self.X1.append(list(chain.from_iterable(tmp_X1)))
-        # else:
-        tmp_X2.append([
-            feature1_1, feature1_2, feature1_3,
+                # feature8_1, feature8_2, feature8_3,
+                # feature9_1, feature9_2, feature9_3,
+                # feature10_1, feature10_2, feature10_3,
+                # feature11_1, feature11_2, feature11_3,
+                # feature12_1, feature12_2, feature12_3,
+                # feature13_1, feature13_2, feature13_3,
+                # feature14_1, feature14_2, feature14_3,
+                # feature15_1, feature15_2, feature15_3,
+                # feature16_1, feature16_2, feature16_3,
+                # int(feature2_1), int(feature2_2),
+                # feature3_1, feature3_2,
+                # int(feature4_1), int(feature4_2),
+                # int(feature5_1), int(feature5_2)
+            ])
+                # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
+                # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
 
-            # feature8_1, feature8_2, feature8_3,
-            # feature9_1, feature9_2, feature9_3,
-            # feature10_1, feature10_2, feature10_3,
-            # feature11_1, feature11_2, feature11_3,
-            # feature12_1, feature12_2, feature12_3,
-            # feature13_1, feature13_2, feature13_3,
-            # feature14_1, feature14_2, feature14_3,
-            # feature15_1, feature15_2, feature15_3,
-            # feature16_1, feature16_2, feature16_3,
-            # int(feature2_1), int(feature2_2),
-            # feature3_1, feature3_2,
-            # int(feature4_1), int(feature4_2),
-            # int(feature5_1), int(feature5_2)
-        ])
-            # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
-            # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
+            if config.MLConf.extra_features:
+                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+                # feature5_1 = False if len(fterms_s1) == 0 else True
+                # feature5_2 = False if len(fterms_s2) == 0 else True
+                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # for x in fterms_s1: feature7_1[x[0]] = 1
+                # for x in fterms_s2: feature7_2[x[0]] = 1
+                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+
+                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
 
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
@@ -1200,10 +1216,11 @@ class calcCustomFEMLExtended(baseMetrics):
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
             if flag: tmp_X2.append([sim16, sim17, sim15])
 
-        row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical)
-
         # for flag in list({False, True}):
-        for flag in list({True}):
+        if sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
+
             lsim_baseThres = 'avg' if flag else 'simple'
 
             start_time = time.time()
@@ -1277,63 +1294,81 @@ class calcCustomFEMLExtended(baseMetrics):
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
                            feature25, feature26, feature27, feature28])
 
-        start_time = time.time()
+            start_time = time.time()
 
-        method_nm = 'damerau_levenshtein'
-        baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
-            row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values[method_nm]['avg'][0])
-        feature1_1, feature1_2, feature1_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, method_nm)
+            method_nm = 'damerau_levenshtein'
+            baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
+                row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values[method_nm]['avg'][0])
+            feature1_1, feature1_2, feature1_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, method_nm)
 
-        # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
-        # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
-        # feature3_1, feature3_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
-        # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
-        # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
-        # fterms_s1, fterms_s2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
-        # feature5_1 = False if len(fterms_s1) == 0 else True
-        # feature5_2 = False if len(fterms_s2) == 0 else True
-        # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
-        # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-        # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-        # for x in fterms_s1: feature7_1[x[0]] = 1
-        # for x in fterms_s2: feature7_2[x[0]] = 1
+            # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+            # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+            # feature3_1, feature3_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+            # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+            # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+            # fterms_s1, fterms_s2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+            # feature5_1 = False if len(fterms_s1) == 0 else True
+            # feature5_2 = False if len(fterms_s2) == 0 else True
+            # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+            # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # for x in fterms_s1: feature7_1[x[0]] = 1
+            # for x in fterms_s2: feature7_2[x[0]] = 1
 
-        # feature8_1, feature8_2, feature8_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'davies')
-        # feature9_1, feature9_2, feature9_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'skipgram')
-        # feature10_1, feature10_2, feature10_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'soft_jaccard')
-        # feature11_1, feature11_2, feature11_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'strike_a_match')
-        # feature12_1, feature12_2, feature12_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'cosine')
-        # feature13_1, feature13_2, feature13_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'monge_elkan')
-        # feature14_1, feature14_2, feature14_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler')
-        # feature15_1, feature15_2, feature15_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro')
-        # feature16_1, feature16_2, feature16_3 = score_per_term(
-        #     {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']]},
-        #     {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']]},
-        #     {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']]},
-        #     'jaro_winkler'
-        # )
+            # feature8_1, feature8_2, feature8_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'davies')
+            # feature9_1, feature9_2, feature9_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'skipgram')
+            # feature10_1, feature10_2, feature10_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'soft_jaccard')
+            # feature11_1, feature11_2, feature11_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'strike_a_match')
+            # feature12_1, feature12_2, feature12_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'cosine')
+            # feature13_1, feature13_2, feature13_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'monge_elkan')
+            # feature14_1, feature14_2, feature14_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro_winkler')
+            # feature15_1, feature15_2, feature15_3 = score_per_term(baseTerms, mismatchTerms, specialTerms, 'jaro')
+            # feature16_1, feature16_2, feature16_3 = score_per_term(
+            #     {'a': [x[::-1] for x in baseTerms['a']], 'b': [x[::-1] for x in baseTerms['b']]},
+            #     {'a': [x[::-1] for x in mismatchTerms['a']], 'b': [x[::-1] for x in mismatchTerms['b']]},
+            #     {'a': [x[::-1] for x in specialTerms['a']], 'b': [x[::-1] for x in specialTerms['b']]},
+            #     'jaro_winkler'
+            # )
 
-        self.timer += (time.time() - start_time)
+            self.timer += (time.time() - start_time)
 
-        tmp_X2.append([
-            feature1_1, feature1_2, feature1_3,
+            tmp_X2.append([
+                feature1_1, feature1_2, feature1_3,
 
-            # feature8_1, feature8_2, feature8_3,
-            # feature9_1, feature9_2, feature9_3,
-            # feature10_1, feature10_2, feature10_3,
-            # feature11_1, feature11_2, feature11_3,
-            # feature12_1, feature12_2, feature12_3,
-            # feature13_1, feature13_2, feature13_3,
-            # feature14_1, feature14_2, feature14_3,
-            # feature15_1, feature15_2, feature15_3,
-            # feature16_1, feature16_2, feature16_3,
-            # int(feature2_1), int(feature2_2),
-            # feature3_1, feature3_2,
-            # int(feature4_1), int(feature4_2),
-            # int(feature5_1), int(feature5_2)
-        ])
-        # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
-        # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
+                # feature8_1, feature8_2, feature8_3,
+                # feature9_1, feature9_2, feature9_3,
+                # feature10_1, feature10_2, feature10_3,
+                # feature11_1, feature11_2, feature11_3,
+                # feature12_1, feature12_2, feature12_3,
+                # feature13_1, feature13_2, feature13_3,
+                # feature14_1, feature14_2, feature14_3,
+                # feature15_1, feature15_2, feature15_3,
+                # feature16_1, feature16_2, feature16_3,
+                # int(feature2_1), int(feature2_2),
+                # feature3_1, feature3_2,
+                # int(feature4_1), int(feature4_2),
+                # int(feature5_1), int(feature5_2)
+            ])
+            # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
+            # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
+
+            if config.MLConf.extra_features:
+                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+                # feature5_1 = False if len(fterms_s1) == 0 else True
+                # feature5_2 = False if len(fterms_s2) == 0 else True
+                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # for x in fterms_s1: feature7_1[x[0]] = 1
+                # for x in fterms_s2: feature7_2[x[0]] = 1
+                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+
+                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
 
         self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
@@ -1396,7 +1431,8 @@ class calcCustomFEMLExtended(baseMetrics):
             print('score: {}, hyperparams: {}'.format(self.best_clf['score'], self.best_clf['hyperparams']))
 
             feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_
-            feature_names = np.asarray(StaticValues.featureColumns)  # transformed list to array
+            cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+            feature_names = np.asarray(cols)  # transformed list to array
             support = pipe_clf.named_steps['select'].support_
 
             print(feature_importances)
@@ -1443,7 +1479,8 @@ class calcCustomFEMLExtended(baseMetrics):
             #         (row for row in (self.Y2, self.Y1))
             # ):
             start_time = time.time()
-            features_supported = [True] * len(StaticValues.featureColumns)
+            cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+            features_supported = [True] * len(cols)
             # if features is not None:
             #     features_supported = [x and y for x, y in zip(features_supported, features)]
             # if fs_method is not None and set([name]) & {'rf', 'et', 'xgboost'}:
@@ -1467,7 +1504,7 @@ class calcCustomFEMLExtended(baseMetrics):
             if hasattr(self.best_clf['estimator'], "feature_importances_"):
                 # self.importances[i] += model.feature_importances_
                 if clf_abbr not in self.importances:
-                    self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
+                    self.importances[clf_abbr] = np.zeros(len(cols), dtype=float)
 
                 for idx, val in zip([i for i, x in enumerate(features_supported) if x], self.best_clf['estimator'].feature_importances_):
                     self.importances[clf_abbr][idx] += val
@@ -1531,7 +1568,9 @@ class calcCustomFEMLExtended(baseMetrics):
                     print("The classifier {} does not expose \"coef_\" or \"feature_importances_\" attributes".format(
                         name))
                 else:
-                    importances = self.importances[idx] / 2.0
+                    cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+
+                    importances = self.importances[idx]
                     importances = np.ma.masked_equal(importances, 0.0)
                     if importances.mask is np.ma.nomask: importances.mask = np.zeros(importances.shape, dtype=bool)
 
@@ -1539,7 +1578,7 @@ class calcCustomFEMLExtended(baseMetrics):
                               :min(importances.compressed().shape[0], self.max_important_features_toshow)]
                     headers = ["name", "score"]
                     print(tabulate(zip(
-                        np.asarray(StaticValues.featureColumns, object)[~importances.mask][indices],
+                        np.asarray(cols, object)[~importances.mask][indices],
                         importances.compressed()[indices]
                     ), headers, tablefmt="simple"))
 
@@ -1555,7 +1594,8 @@ class calcCustomFEMLExtended(baseMetrics):
 
         print('')
 
-        df = pd.DataFrame(np.array(self.X1).reshape(-1, len(StaticValues.featureColumns)), columns=StaticValues.featureColumns)
+        cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+        df = pd.DataFrame(np.array(self.X1).reshape(-1, len(cols)), columns=cols)
         # with pd.option_context('display.max_columns', None):
         output_f = './output/X1_train_stats.csv'
         df.describe().T.to_csv(output_f)
@@ -1566,8 +1606,7 @@ class calcCustomFEMLExtended(baseMetrics):
             # f.write("Highest freq values per column in X1_train\n")
             # df.mode(axis=0, dropna=False).T.to_csv(f, header=False)
 
-        df = pd.DataFrame(np.array(self.X2).reshape(-1, len(StaticValues.featureColumns)),
-                          columns=StaticValues.featureColumns)
+        df = pd.DataFrame(np.array(self.X2).reshape(-1, len(cols)), columns=cols)
         output_f = './output/X2_train_stats.csv'
         df.describe().T.to_csv(output_f)
         with open(output_f, 'a') as f:
@@ -1805,6 +1844,24 @@ class calcWithCustomHyperparams(baseMetrics):
                 # int(feature5_1), int(feature5_2)
             ])
 
+            if config.MLConf.extra_features:
+                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+                # feature5_1 = False if len(fterms_s1) == 0 else True
+                # feature5_2 = False if len(fterms_s2) == 0 else True
+                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # for x in fterms_s1: feature7_1[x[0]] = 1
+                # for x in fterms_s2: feature7_2[x[0]] = 1
+                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+
+                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
+
         # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
         #     if selectable_features is not None:
         #         self.X1.append(list(compress(chain.from_iterable(tmp_X1), selectable_features)))
@@ -1980,6 +2037,24 @@ class calcWithCustomHyperparams(baseMetrics):
                 # int(feature5_1), int(feature5_2)
             ])
 
+            if config.MLConf.extra_features:
+                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+                # feature5_1 = False if len(fterms_s1) == 0 else True
+                # feature5_2 = False if len(fterms_s2) == 0 else True
+                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+                # for x in fterms_s1: feature7_1[x[0]] = 1
+                # for x in fterms_s2: feature7_2[x[0]] = 1
+                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+
+                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
+
         self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
@@ -2010,7 +2085,8 @@ class calcWithCustomHyperparams(baseMetrics):
             #         ((row for row in (self.Y2, self.Y1)))
             # ):
             start_time = time.time()
-            features_supported = [True] * len(StaticValues.featureColumns)
+            cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+            features_supported = [True] * len(cols)
             # if features is not None:
             #     features_supported = [x and y for x, y in zip(features_supported, features)]
             # if fs_method is not None and {'rf', 'et', 'xgboost'}.intersection({name}):
@@ -2019,12 +2095,11 @@ class calcWithCustomHyperparams(baseMetrics):
             #     )
             #     tot_features = [x or y for x, y in izip_longest(features_supported, tot_features, fillvalue=False)]
 
-            selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            # selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
             scaler = MinMaxScaler()
             # scaler = StandardScaler()
 
             pipe_params = [('scaler', scaler), ('clf', model)]
-            # pipe_params = [ ('clf', cv)]
             pipe_clf = Pipeline(pipe_params)
             pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
             # model.fit(np.asarray(self.train_X), self.train_Y)
@@ -2098,7 +2173,8 @@ class calcWithCustomHyperparams(baseMetrics):
                     print("The classifier {} does not expose \"coef_\" or \"feature_importances_\" attributes".format(
                         name))
                 else:
-                    importances = self.importances[idx] / 2.0
+                    cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+                    importances = self.importances[idx]
                     importances = np.ma.masked_equal(importances, 0.0)
                     if importances.mask is np.ma.nomask: importances.mask = np.zeros(importances.shape, dtype=bool)
 
@@ -2109,7 +2185,7 @@ class calcWithCustomHyperparams(baseMetrics):
                               :min(importances.shape[0], self.max_important_features_toshow)]
                     headers = ["name", "score"]
                     print(tabulate(zip(
-                        np.asarray(StaticValues.featureColumns, object)[~importances.mask][indices],
+                        np.asarray(cols, object)[~importances.mask][indices],
                         importances.compressed()[indices]
                     ), headers, tablefmt="simple"))
 
