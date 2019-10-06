@@ -2023,7 +2023,7 @@ class calcWithCustomHyperparams(baseMetrics):
             scaler = MinMaxScaler()
             # scaler = StandardScaler()
 
-            pipe_params = [('scaler', scaler), ('select', selector)]
+            pipe_params = [('scaler', scaler), ('clf', model)]
             # pipe_params = [ ('clf', cv)]
             pipe_clf = Pipeline(pipe_params)
             pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
