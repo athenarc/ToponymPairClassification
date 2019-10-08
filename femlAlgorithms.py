@@ -2099,9 +2099,16 @@ class calcWithCustomHyperparams(baseMetrics):
             scaler = MinMaxScaler()
             # scaler = StandardScaler()
 
-            pipe_params = [('scaler', scaler), ('clf', model)]
+            pipe_params = None
+            # TODO check why hasattr cannot find feature_importances_
+            # if hasattr(model, "feature_importances_") or hasattr(model, "coef_"):
+            selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            pipe_params = [('scaler', scaler), ('clf', selector)]
+            # else:
+            #     pipe_params = [('scaler', scaler), ('clf', model)]
             pipe_clf = Pipeline(pipe_params)
             pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
+            # print(pipe_clf.named_steps['clf'].support_)
             # model.fit(np.asarray(self.train_X), self.train_Y)
             train_time += (time.time() - start_time)
 
