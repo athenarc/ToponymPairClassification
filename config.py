@@ -64,7 +64,7 @@ class MLConf:
     #: int: The number of inner folds that splits the dataset for the k-fold cross-validation.
     kfold_inner_parameter = 4
 
-    n_jobs = 8  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
+    n_jobs = 6  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
 
     train_score = False
     stopping_rounds = 30
@@ -106,11 +106,12 @@ class MLConf:
         },
         'RandomForest': {
             # basic
-            'n_estimators': 300, 'max_depth': 100, 'oob_score': True,
-            'bootstrap': True,
+            # 'n_estimators': 300, 'max_depth': 100, 'oob_score': True, 'bootstrap': True,
             # global
             # 'bootstrap': True, 'min_samples_leaf': 1, 'n_estimators': 789, 'min_samples_split': 10,
             # 'criterion': 'entropy', 'max_features': 'sqrt', 'max_depth': 22, 'class_weight': 'balanced',
+            'bootstrap': True, 'min_samples_leaf': 3, 'n_estimators': 908, 'min_samples_split': 6,
+            'criterion': 'entropy', 'max_features': 'log2', 'max_depth': 16, 'class_weight': None,
             # latin
             'random_state': seed_no, 'n_jobs': n_jobs,  # 'oob_score': True,
         },
@@ -125,10 +126,12 @@ class MLConf:
         },
         'XGBoost': {
             # basic
-            'n_estimators': 3000,
+            # 'n_estimators': 3000,
             # global
             # 'colsample_bytree': 0.24017567934980052, 'eta': 0.0324220310237971, 'gamma': 3, 'max_depth': 83,
             # 'min_child_weight': 8, 'n_estimators': 988, 'subsample': 0.7029480027059571,
+            'colsample_bytree': 0.7495179128964403, 'min_child_weight': 4, 'n_estimators': 605,
+            'subsample': 0.7936869738003342, 'eta': 0.13386673842293018, 'max_depth': 4, 'gamma': 1,
             # latin
             'seed': seed_no, 'nthread': n_jobs
         },
