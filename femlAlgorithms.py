@@ -1491,14 +1491,14 @@ class calcCustomFEMLExtended(baseMetrics):
 
             # model.fit(X_train, y_train)
             # print('outside cv hyperparams: {}'.format(self.best_clf['estimator'].get_params()))
-            self.best_clf['estimator'].fit(np.asarray(self.train_X), self.train_Y)
+            self.best_clf['estimator'].fit(self.train_X, self.train_Y)
             # print(best_clf['estimator'].feature_importances_)
             train_time += (time.time() - start_time)
 
             start_time = time.time()
             # predictedL += list(model.predict(X_pred))
             # self.test_X = pipe_clf.transform(self.test_X)
-            predictedL += list(self.best_clf['estimator'].predict(np.asarray(self.test_X)))
+            predictedL += list(self.best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
             if hasattr(self.best_clf['estimator'], "feature_importances_"):
