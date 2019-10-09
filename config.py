@@ -165,7 +165,7 @@ class MLConf:
         'max_features': ['log2', 'sqrt'],  # auto is equal to sqrt
         'min_samples_leaf': [1, 2, 4],
         'min_samples_split': [2, 5, 10],
-        "n_estimators": [250, 500, 1000],
+        "n_estimators": [10, 100, 250, 500, 1000],
         'class_weight': [None, 'balanced', {0: 1, 1: 20}],
     }
     XGBoost_hyperparameters = {
@@ -189,11 +189,12 @@ class MLConf:
 
     # These parameters constitute the search space for RandomizedSearchCV in our experiments.
     SVM_hyperparameters_dist = {
-        'C': expon(scale=100),
+        'C': expon(loc=0.01, scale=20),
         # 'kernel': ['rbf', 'poly', 'sigmoid'],
         'class_weight': ['balanced', None],
         'tol': [1e-3, 1e-4],
-        'max_iter': [3000]
+        'max_iter': [3000],
+        'dual': False
     }
     DecisionTree_hyperparameters_dist = {
         'max_depth': sp_randint(10, 100),
@@ -208,18 +209,19 @@ class MLConf:
         'max_features': ['sqrt', 'log2'],  # sp_randint(1, 11)
         'min_samples_leaf': sp_randint(1, 5),
         'min_samples_split': sp_randint(2, 11),
-        "n_estimators": sp_randint(250, 1000),
+        "n_estimators": sp_randint(10, 1000),  # default: 10
         'class_weight': ['balanced', None],
     }
     XGBoost_hyperparameters_dist = {
-        "n_estimators": sp_randint(200, 4000),
+        "n_estimators": sp_randint(100, 3000),
         'eta': expon(loc=0.01, scale=0.1),  # 'learning_rate'
         # hyperparameters to avoid overfitting
         'max_depth': sp_randint(3, 60),
-        'gamma': sp_randint(1, 5),
-        'subsample': truncnorm(0.3, 0.8),
-        'colsample_bytree': truncnorm(0.3, 0.8),
+        'gamma': sp_randint(0, 5),
+        'subsample': truncnorm(0.3, 1),
+        'colsample_bytree': truncnorm(0.3, 1),
         'min_child_weight': sp_randint(1, 6),
+        'booster': ['gbtree', 'gblinear', 'dart']
     }
     MLP_hyperparameters_dist = {
         'learning_rate_init': expon(loc=0.0001, scale=0.1),
