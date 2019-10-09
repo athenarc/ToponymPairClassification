@@ -2107,7 +2107,7 @@ class calcWithCustomHyperparams(baseMetrics):
             # else:
             #     pipe_params = [('scaler', scaler), ('clf', model)]
             pipe_clf = Pipeline(pipe_params)
-            pipe_clf.fit(np.asarray(self.train_X), pd.Series(self.train_Y))
+            pipe_clf.fit(self.train_X, self.train_Y)
             # print(pipe_clf.named_steps['clf'].support_)
             # model.fit(np.asarray(self.train_X), self.train_Y)
             train_time += (time.time() - start_time)

@@ -64,7 +64,7 @@ class MLConf:
     #: int: The number of inner folds that splits the dataset for the k-fold cross-validation.
     kfold_inner_parameter = 4
 
-    n_jobs = 6  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
+    n_jobs = 4  #: int: Number of parallel jobs to be initiated. -1 means to utilize all available processors.
 
     train_score = False
     stopping_rounds = 30
