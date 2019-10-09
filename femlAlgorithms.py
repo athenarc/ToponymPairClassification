@@ -1430,16 +1430,23 @@ class calcCustomFEMLExtended(baseMetrics):
             _, self.best_clf = max(enumerate(hyperparams_data), key=(lambda x: x[1]['score']))
             print('score: {}, hyperparams: {}'.format(self.best_clf['score'], self.best_clf['hyperparams']))
 
-            feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_
-            cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
-            feature_names = np.asarray(cols)  # transformed list to array
-            support = pipe_clf.named_steps['select'].support_
+            feature_importances_ = None
+            if hasattr(pipe_clf.named_steps['clf'].best_estimator_, 'feature_importances_') or hasattr(pipe_clf.named_steps['clf'].best_estimator_, 'coef_'):
+                feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_ \
+                    if hasattr(pipe_clf.named_steps['clf'].best_estimator_, 'feature_importances_') \
+                    else pipe_clf.named_steps['clf'].best_estimator_.coef_
+                cols = StaticValues.featureColumns + StaticValues.extraFeatures \
+                    if config.MLConf.extra_features \
+                    else StaticValues.featureColumns
+                feature_names = np.asarray(cols)  # transformed list to array
+                support = pipe_clf.named_steps['select'].support_
 
-            print(feature_importances)
-            print('features selected: {}'.format(
-                {k: v for k, v in zip(feature_names[support], feature_importances)}
-            ))
-            print('features flags: {}'.format(support))
+                print(feature_importances)
+                print('features selected: {}'.format(
+                    {k: v for k, v in zip(feature_names[support], feature_importances)}
+                ))
+                print('features flags: {}'.format(support))
+            else: print('Attr "feature_importances_" or "coef_" is not supported!!!')
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
         # if polynomial:

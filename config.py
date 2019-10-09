@@ -191,10 +191,10 @@ class MLConf:
     SVM_hyperparameters_dist = {
         'C': expon(loc=0.01, scale=20),
         # 'kernel': ['rbf', 'poly', 'sigmoid'],
-        'class_weight': ['balanced', None],
+        'class_weight': [None],
         'tol': [1e-3, 1e-4],
         'max_iter': [3000],
-        'dual': False
+        'dual': [False]
     }
     DecisionTree_hyperparameters_dist = {
         'max_depth': sp_randint(10, 100),
