@@ -1966,12 +1966,7 @@ class calcWithCustomHyperparams(baseMetrics):
         else:
             self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
-        if not self.fname:
-            self.fname = 'results-evaluation'
-            if canonical:
-                self.fname += '_canonical'
-            if sorting:
-                self.fname += '_sorted'
+        if not self.fname: self.fname = 'results-evaluation_{}'.format(custom_thres.replace('/', ''))
 
     def load_test_dataset(self, row, sorting=False, stemming=False, canonical=False, permuted=False, custom_thres='orig'):
         if row['res'].upper() == "TRUE":
@@ -2263,7 +2258,9 @@ class calcWithCustomHyperparams(baseMetrics):
             print("Training took {0:.3f} sec ({1:.3f} min)".format(train_time, train_time / 60.0))
             self.timers[clf_abbr] += self.timer
 
-            if self.accuracyresults: self.file = open('{}_{}.csv'.format(self.fname, name), 'w+')
+            true_sum = sum(config.MLConf.features_to_build.values())
+            pos = ''.join([k for k, v in config.MLConf.features_to_build.items() if v is True]) if true_sum == 1 else str(true_sum)
+            if self.accuracyresults: self.file = open('{}_{}_{}.csv'.format(self.fname, name, pos), 'w+')
 
             print("Matching records...")
             # real = self.Y2 + self.Y1
