@@ -89,7 +89,7 @@ class MLConf:
     Details on available inputs.       
     """
     #: int: Number of iterations that RandomizedSearchCV should execute. It applies only when :class:`hyperparams_search_method` equals to 'randomized'.
-    max_iter = 3
+    max_iter = 300
 
     clf_static_params = {
         'SVM': {
