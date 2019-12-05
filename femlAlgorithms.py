@@ -12,7 +12,7 @@ import itertools
 import glob
 import csv
 from text_unidecode import unidecode
-from itertools import compress, chain, izip_longest, izip
+from itertools import compress, chain
 
 import numpy as np
 import pandas as pd
