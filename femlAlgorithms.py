@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 # identifying str and unicode on Python 2, or str on Python 3
-from six import string_types
+from six import string_types, text_type
 
 import os, sys
 import time
@@ -13,6 +13,7 @@ import glob
 import csv
 from text_unidecode import unidecode
 from itertools import compress, chain
+from io import open
 
 import numpy as np
 import pandas as pd
@@ -84,8 +85,8 @@ def ascii_transliteration_and_punctuation_strip(s):
 
 
 def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' ', sort_thres=0.45):
-    a = strA.decode('utf8') #.lower()
-    b = strB.decode('utf8') #.lower()
+    a = text_type(strA) #.lower()
+    b = text_type(strB)
 
     if canonical:
         a = ascii_transliteration_and_punctuation_strip(a)
@@ -112,7 +113,7 @@ def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimi
 
 
 def transform_str(s, stemming=False, canonical=False, delimiter=' '):
-    a = s.decode('utf8')
+    a = text_type(s)
 
     if canonical:
         a = ascii_transliteration_and_punctuation_strip(a)
@@ -271,7 +272,7 @@ class FEMLFeatures:
                         if i >= FEMLFeatures.no_freq_terms:
                             break
 
-                        LSimilarityVars.freq_ngrams[gram_type].add(row['term'].decode('utf8'))
+                        LSimilarityVars.freq_ngrams[gram_type].add(text_type(row['term']))
             print('Frequent terms loaded.')
         else:
             print("Folder 'input' does not exist")
