@@ -970,8 +970,6 @@ class calcCustomFEMLExtended(baseMetrics):
             if flag:
                 sim16 = StaticValues.algorithms['l_jaro_winkler'](a, b)
                 sim17 = StaticValues.algorithms['l_jaro_winkler'](a[::-1], b[::-1])
-                # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
-                sim15 = StaticValues.algorithms['avg_lsimilarity'](a, b)
 
             self.timer += (time.time() - start_time)
 
@@ -990,16 +988,19 @@ class calcCustomFEMLExtended(baseMetrics):
             else:
                 if flag: tmp_X2.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
                 else: tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
-            if flag: tmp_X2.append([sim16, sim17, sim15])
+            if flag: tmp_X2.append([sim16, sim17])
 
         # for flag in list({False, True}):
         if config.MLConf.features_to_build['lgm'] and sorting:
+            start_time = time.time()
+
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
-            start_time = time.time()
+            # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
+            sim15 = StaticValues.algorithms['avg_lsimilarity'](row['s1'], row['s2'])
 
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['davies'][lsim_baseThres][0])
@@ -1071,8 +1072,10 @@ class calcCustomFEMLExtended(baseMetrics):
             #     tmp_X1.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
             #                    feature25, feature26, feature27])
             # else:
-            tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27, feature28])
+            tmp_X2.append([
+                sim15, feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+                feature25, feature26, feature27, feature28
+            ])
 
         if config.MLConf.features_to_build['individual'] and sorting:
             start_time = time.time()
@@ -1219,8 +1222,6 @@ class calcCustomFEMLExtended(baseMetrics):
             if flag:
                 sim16 = StaticValues.algorithms['l_jaro_winkler'](a, b)
                 sim17 = StaticValues.algorithms['l_jaro_winkler'](a[::-1], b[::-1])
-                # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
-                sim15 = StaticValues.algorithms['avg_lsimilarity'](a, b)
 
             self.timer += (time.time() - start_time)
 
@@ -1234,16 +1235,19 @@ class calcCustomFEMLExtended(baseMetrics):
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
                 else:
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
-            if flag: tmp_X2.append([sim16, sim17, sim15])
+            if flag: tmp_X2.append([sim16, sim17])
 
         # for flag in list({False, True}):
         if config.MLConf.features_to_build['lgm'] and sorting:
+            start_time = time.time()
+
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
-            start_time = time.time()
+            # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
+            sim15 = StaticValues.algorithms['avg_lsimilarity'](row['s1'], row['s2'])
 
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['davies'][lsim_baseThres][0])
@@ -1311,8 +1315,10 @@ class calcCustomFEMLExtended(baseMetrics):
 
             self.timer += (time.time() - start_time)
 
-            tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27, feature28])
+            tmp_X2.append([
+                sim15, feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+                feature25, feature26, feature27, feature28
+            ])
 
         if config.MLConf.features_to_build['individual'] and sorting:
             start_time = time.time()
@@ -1793,8 +1799,6 @@ class calcWithCustomHyperparams(baseMetrics):
             if flag:
                 sim16 = StaticValues.algorithms['l_jaro_winkler'](a, b)
                 sim17 = StaticValues.algorithms['l_jaro_winkler'](a[::-1], b[::-1])
-                # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
-                sim15 = StaticValues.algorithms['avg_lsimilarity'](a, b)
 
             self.train_timer += (time.time() - start_time)
 
@@ -1812,16 +1816,19 @@ class calcWithCustomHyperparams(baseMetrics):
             else:
                 if flag: tmp_X2.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
                 else: tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
-            if flag: tmp_X2.append([sim16, sim17, sim15])
+            if flag: tmp_X2.append([sim16, sim17])
 
         # for flag in list({False, True}):
         if config.MLConf.features_to_build['lgm'] and sorting:
+            start_time = time.time()
+
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
-            start_time = time.time()
+            # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
+            sim15 = StaticValues.algorithms['avg_lsimilarity'](row['s1'], row['s2'])
 
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['davies'][lsim_baseThres][0])
@@ -1893,8 +1900,10 @@ class calcWithCustomHyperparams(baseMetrics):
             #     tmp_X1.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
             #                    feature25, feature26, feature27])
             # else:
-            tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27, feature28])
+            tmp_X2.append([
+                sim15, feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+                feature25, feature26, feature27, feature28
+            ])
 
         if config.MLConf.features_to_build['individual'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
@@ -1997,8 +2006,6 @@ class calcWithCustomHyperparams(baseMetrics):
             if flag:
                 sim16 = StaticValues.algorithms['l_jaro_winkler'](a, b)
                 sim17 = StaticValues.algorithms['l_jaro_winkler'](a[::-1], b[::-1])
-                # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
-                sim15 = StaticValues.algorithms['avg_lsimilarity'](a, b)
 
             self.timer += (time.time() - start_time)
 
@@ -2013,15 +2020,18 @@ class calcWithCustomHyperparams(baseMetrics):
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
                 else:
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
-            if flag: tmp_X2.append([sim16, sim17, sim15])
+            if flag: tmp_X2.append([sim16, sim17])
 
         if config.MLConf.features_to_build['lgm'] and sorting:
+            start_time = time.time()
+
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
-            start_time = time.time()
+            # sim14 = StaticValues.algorithms['lsimilarity'](a, b)
+            sim15 = StaticValues.algorithms['avg_lsimilarity'](row['s1'], row['s2'])
 
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
                 row['s1'], row['s2'], LSimilarityVars.per_metric_optimal_values['davies'][lsim_baseThres][0])
@@ -2093,8 +2103,10 @@ class calcWithCustomHyperparams(baseMetrics):
             #     tmp_X1.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
             #                    feature25, feature26, feature27])
             # else:
-            tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
-                           feature25, feature26, feature27, feature28])
+            tmp_X2.append([
+                sim15, feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
+                feature25, feature26, feature27, feature28
+            ])
 
         if config.MLConf.features_to_build['individual'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
@@ -2158,6 +2170,19 @@ class calcWithCustomHyperparams(baseMetrics):
         if set(ml_algs) != {'all'}: self.mlalgs_to_run = ml_algs
         # for i, (name, clf) in enumerate(zip(self.names, self.classifiers)):
 
+        cols = []
+        if config.MLConf.features_to_build['basic']:
+            cols += StaticValues.basicFeatures
+        if config.MLConf.features_to_build['sorted']:
+            cols += StaticValues.sortedFeatures
+        if config.MLConf.features_to_build['lgm']:
+            cols += StaticValues.lgmFeatures
+        if config.MLConf.features_to_build['individual']:
+            cols += StaticValues.individualFeatures
+        if config.MLConf.features_to_build['stats']:
+            cols += StaticValues.extraFeatures
+        feature_names = np.asarray(cols)
+
         for name in self.mlalgs_to_run:
             if name not in StaticValues.classifiers_abbr.keys():
                 print('{} is not a valid ML algorithm'.format(name))
@@ -2177,18 +2202,6 @@ class calcWithCustomHyperparams(baseMetrics):
             #         ((row for row in (self.Y2, self.Y1)))
             # ):
             start_time = time.time()
-            cols = []
-            if config.MLConf.features_to_build['basic']:
-                cols += StaticValues.basicFeatures
-            if config.MLConf.features_to_build['sorted']:
-                cols += StaticValues.sortedFeatures
-            if config.MLConf.features_to_build['lgm']:
-                cols += StaticValues.lgmFeatures
-            if config.MLConf.features_to_build['individual']:
-                cols += StaticValues.individualFeatures
-            if config.MLConf.features_to_build['stats']:
-                cols += StaticValues.extraFeatures
-            feature_names = np.asarray(cols)
 
             # features_supported = [True] * len(cols)
             # if features is not None:

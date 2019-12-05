@@ -11,7 +11,7 @@ from helpers import normalize_str, getRelativePathtoWorking, StaticValues
 from datasetcreator import filter_dataset, build_dataset_from_geonames
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-from sklearn.model_selection import train_test_split
+from io import open
 
 
 class Evaluator:
@@ -48,7 +48,7 @@ class Evaluator:
             print("Unkown method")
             return 1
 
-        with open(dataset) as csvfile:
+        with open(dataset, encoding='utf8') as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
                                     delimiter='\t')
             for row in reader:
@@ -62,7 +62,7 @@ class Evaluator:
 
             start_time = time.time()
             print("Reading train dataset...")
-            with open(dataset) as csvfile:
+            with open(dataset, encoding='utf8') as csvfile:
                 reader = csv.DictReader(csvfile, fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
                                         delimiter='\t')
 
@@ -93,7 +93,7 @@ class Evaluator:
                     start_time = time.time()
                     print("Reading test dataset...")
                     with open(os.path.join(os.path.abspath(os.path.dirname(__main__.__file__)),
-                                           config.test_dataset)) as csvfile:
+                                           config.test_dataset), encoding='utf8') as csvfile:
                         reader = csv.DictReader(csvfile,
                                                 fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
                                                 delimiter='\t')
