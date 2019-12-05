@@ -363,10 +363,10 @@ class baseMetrics:
         # print("F1 =", f1)
         # print("Processing time per 50K records =", timer)
         # print("")
-		print("| Method\t\t& Accuracy\t& Precision\t& Recall\t& F1-Score\t& Time (sec)")  # (50K Pairs)")
-		print("||{0}\t& {1}\t& {2}\t& {3}\t& {4}\t& {5}".format(method, acc, pre, rec, f1, timer))
+        print("| Method\t\t& Accuracy\t& Precision\t& Recall\t& F1-Score\t& Time (sec)")  # (50K Pairs)")
+        print("||{0}\t& {1}\t& {2}\t& {3}\t& {4}\t& {5}".format(method, acc, pre, rec, f1, timer))
         # print("")
-		sys.stdout.flush()
+        sys.stdout.flush()
 
     def print_stats(self):
         for idx, m in enumerate(StaticValues.methods):
@@ -439,6 +439,13 @@ class baseMetrics:
             print("{} features selected using SelectFromModel.".format(X.shape[1]))
 
         return X, X_t, fsupported
+
+    # Create our function which stores the feature rankings to the ranks dictionary
+    def ranking(self, ranks, names, order=1):
+        minmax = MinMaxScaler()
+        ranks = minmax.fit_transform(order * np.array([ranks]).T).T[0]
+        ranks = map(lambda x: round(x, 2), ranks)
+        return dict(zip(names, ranks))
 
 
 class calcSotAMetrics(baseMetrics):
@@ -940,6 +947,8 @@ class calcCustomFEMLExtended(baseMetrics):
 
         tmp_X1, tmp_X2 = [], []
         for flag in list({False, sorting}):
+            if (not flag and not config.MLConf.features_to_build['basic']) or (flag and not config.MLConf.features_to_build['sorted']): continue
+
             a, b = transform(row['s1'], row['s2'], sorting=flag, stemming=stemming, canonical=flag)
 
             start_time = time.time()
@@ -983,7 +992,7 @@ class calcCustomFEMLExtended(baseMetrics):
             if flag: tmp_X2.append([sim16, sim17, sim15])
 
         # for flag in list({False, True}):
-        if sorting:
+        if config.MLConf.features_to_build['lgm'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
@@ -1064,7 +1073,11 @@ class calcCustomFEMLExtended(baseMetrics):
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
                            feature25, feature26, feature27, feature28])
 
+        if config.MLConf.features_to_build['individual'] and sorting:
             start_time = time.time()
+
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
 
             method_nm = 'damerau_levenshtein'
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
@@ -1138,23 +1151,26 @@ class calcCustomFEMLExtended(baseMetrics):
                 # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
                 # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
 
-            if config.MLConf.extra_features:
-                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
-                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
-                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
-                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
-                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
-                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
-                # feature5_1 = False if len(fterms_s1) == 0 else True
-                # feature5_2 = False if len(fterms_s2) == 0 else True
-                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
-                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # for x in fterms_s1: feature7_1[x[0]] = 1
-                # for x in fterms_s2: feature7_2[x[0]] = 1
-                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+        if config.MLConf.features_to_build['stats'] and sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
 
-                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
+            # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+            # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+            feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+            # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+            # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+            feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+            # feature5_1 = False if len(fterms_s1) == 0 else True
+            # feature5_2 = False if len(fterms_s2) == 0 else True
+            # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+            # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # for x in fterms_s1: feature7_1[x[0]] = 1
+            # for x in fterms_s2: feature7_2[x[0]] = 1
+            feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+
+            tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
 
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
@@ -1179,6 +1195,9 @@ class calcCustomFEMLExtended(baseMetrics):
 
         tmp_X1, tmp_X2 = [], []
         for flag in list({False, sorting}):
+            if (not flag and not config.MLConf.features_to_build['basic']) or (
+                    flag and not config.MLConf.features_to_build['sorted']): continue
+
             a, b = transform(row['s1'], row['s2'], sorting=flag, stemming=stemming, canonical=flag)
 
             start_time = time.time()
@@ -1217,7 +1236,7 @@ class calcCustomFEMLExtended(baseMetrics):
             if flag: tmp_X2.append([sim16, sim17, sim15])
 
         # for flag in list({False, True}):
-        if sorting:
+        if config.MLConf.features_to_build['lgm'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
@@ -1294,7 +1313,11 @@ class calcCustomFEMLExtended(baseMetrics):
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
                            feature25, feature26, feature27, feature28])
 
+        if config.MLConf.features_to_build['individual'] and sorting:
             start_time = time.time()
+
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
 
             method_nm = 'damerau_levenshtein'
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
@@ -1352,23 +1375,26 @@ class calcCustomFEMLExtended(baseMetrics):
             # tmp_X2.append(map(lambda x: int(x == max(feature6_1)), feature6_1))
             # tmp_X2.append(map(lambda x: int(x == max(feature6_2)), feature6_2))
 
-            if config.MLConf.extra_features:
-                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
-                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
-                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
-                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
-                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
-                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
-                # feature5_1 = False if len(fterms_s1) == 0 else True
-                # feature5_2 = False if len(fterms_s2) == 0 else True
-                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
-                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # for x in fterms_s1: feature7_1[x[0]] = 1
-                # for x in fterms_s2: feature7_2[x[0]] = 1
-                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+        if config.MLConf.features_to_build['stats'] and sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
 
-                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
+            # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+            # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+            feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+            # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+            # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+            feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+            # feature5_1 = False if len(fterms_s1) == 0 else True
+            # feature5_2 = False if len(fterms_s2) == 0 else True
+            # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+            # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # for x in fterms_s1: feature7_1[x[0]] = 1
+            # for x in fterms_s2: feature7_2[x[0]] = 1
+            feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+
+            tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
 
         self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
@@ -1435,9 +1461,19 @@ class calcCustomFEMLExtended(baseMetrics):
                 feature_importances = pipe_clf.named_steps['clf'].best_estimator_.feature_importances_ \
                     if hasattr(pipe_clf.named_steps['clf'].best_estimator_, 'feature_importances_') \
                     else pipe_clf.named_steps['clf'].best_estimator_.coef_
-                cols = StaticValues.featureColumns + StaticValues.extraFeatures \
-                    if config.MLConf.extra_features \
-                    else StaticValues.featureColumns
+
+                cols = []
+                if config.MLConf.features_to_build['basic']:
+                    cols += StaticValues.basicFeatures
+                if config.MLConf.features_to_build['sorted']:
+                    cols += StaticValues.sortedFeatures
+                if config.MLConf.features_to_build['lgm']:
+                    cols += StaticValues.lgmFeatures
+                if config.MLConf.features_to_build['individual']:
+                    cols += StaticValues.individualFeatures
+                if config.MLConf.features_to_build['stats']:
+                    cols += StaticValues.extraFeatures
+
                 feature_names = np.asarray(cols)  # transformed list to array
                 support = pipe_clf.named_steps['select'].support_
 
@@ -1445,7 +1481,7 @@ class calcCustomFEMLExtended(baseMetrics):
                 print('features selected: {}'.format(
                     {k: v for k, v in zip(feature_names[support], feature_importances)}
                 ))
-                print('features flags: {}'.format(support))
+                print('features mask: {}'.format(support))
             else: print('Attr "feature_importances_" or "coef_" is not supported!!!')
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
@@ -1486,7 +1522,17 @@ class calcCustomFEMLExtended(baseMetrics):
             #         (row for row in (self.Y2, self.Y1))
             # ):
             start_time = time.time()
-            cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+            cols = []
+            if config.MLConf.features_to_build['basic']:
+                cols += StaticValues.basicFeatures
+            if config.MLConf.features_to_build['sorted']:
+                cols += StaticValues.sortedFeatures
+            if config.MLConf.features_to_build['lgm']:
+                cols += StaticValues.lgmFeatures
+            if config.MLConf.features_to_build['individual']:
+                cols += StaticValues.individualFeatures
+            if config.MLConf.features_to_build['stats']:
+                cols += StaticValues.extraFeatures
             features_supported = [True] * len(cols)
             # if features is not None:
             #     features_supported = [x and y for x, y in zip(features_supported, features)]
@@ -1575,7 +1621,17 @@ class calcCustomFEMLExtended(baseMetrics):
                     print("The classifier {} does not expose \"coef_\" or \"feature_importances_\" attributes".format(
                         name))
                 else:
-                    cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+                    cols = []
+                    if config.MLConf.features_to_build['basic']:
+                        cols += StaticValues.basicFeatures
+                    if config.MLConf.features_to_build['sorted']:
+                        cols += StaticValues.sortedFeatures
+                    if config.MLConf.features_to_build['lgm']:
+                        cols += StaticValues.lgmFeatures
+                    if config.MLConf.features_to_build['individual']:
+                        cols += StaticValues.individualFeatures
+                    if config.MLConf.features_to_build['stats']:
+                        cols += StaticValues.extraFeatures
 
                     importances = self.importances[idx]
                     importances = np.ma.masked_equal(importances, 0.0)
@@ -1601,7 +1657,18 @@ class calcCustomFEMLExtended(baseMetrics):
 
         print('')
 
-        cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+        cols = []
+        if config.MLConf.features_to_build['basic']:
+            cols += StaticValues.basicFeatures
+        if config.MLConf.features_to_build['sorted']:
+            cols += StaticValues.sortedFeatures
+        if config.MLConf.features_to_build['lgm']:
+            cols += StaticValues.lgmFeatures
+        if config.MLConf.features_to_build['individual']:
+            cols += StaticValues.individualFeatures
+        if config.MLConf.features_to_build['stats']:
+            cols += StaticValues.extraFeatures
+
         df = pd.DataFrame(np.array(self.X1).reshape(-1, len(cols)), columns=cols)
         # with pd.option_context('display.max_columns', None):
         output_f = './output/X1_train_stats.csv'
@@ -1626,6 +1693,7 @@ class calcCustomFEMLExtended(baseMetrics):
 
 class calcWithCustomHyperparams(baseMetrics):
     max_important_features_toshow = 50
+    fname = ''
 
     def __init__(self, njobs, accures):
         self.X1 = []
@@ -1701,6 +1769,9 @@ class calcWithCustomHyperparams(baseMetrics):
 
         tmp_X1, tmp_X2 = [], []
         for flag in list({False, sorting}):
+            if (not flag and not config.MLConf.features_to_build['basic']) or (
+                    flag and not config.MLConf.features_to_build['sorted']): continue
+
             a, b = transform(row['s1'], row['s2'], sorting=flag, stemming=stemming, canonical=flag)
 
             start_time = time.time()
@@ -1743,7 +1814,7 @@ class calcWithCustomHyperparams(baseMetrics):
             if flag: tmp_X2.append([sim16, sim17, sim15])
 
         # for flag in list({False, True}):
-        if sorting:
+        if config.MLConf.features_to_build['lgm'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
@@ -1824,6 +1895,9 @@ class calcWithCustomHyperparams(baseMetrics):
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
                            feature25, feature26, feature27, feature28])
 
+        if config.MLConf.features_to_build['individual'] and sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
             start_time = time.time()
 
             method_nm = 'damerau_levenshtein'
@@ -1851,23 +1925,25 @@ class calcWithCustomHyperparams(baseMetrics):
                 # int(feature5_1), int(feature5_2)
             ])
 
-            if config.MLConf.extra_features:
-                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
-                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
-                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
-                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
-                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
-                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
-                # feature5_1 = False if len(fterms_s1) == 0 else True
-                # feature5_2 = False if len(fterms_s2) == 0 else True
-                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
-                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # for x in fterms_s1: feature7_1[x[0]] = 1
-                # for x in fterms_s2: feature7_2[x[0]] = 1
-                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+        if config.MLConf.features_to_build['stats'] and sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
+            # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+            # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+            feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+            # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+            # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+            feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+            # feature5_1 = False if len(fterms_s1) == 0 else True
+            # feature5_2 = False if len(fterms_s2) == 0 else True
+            # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+            # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # for x in fterms_s1: feature7_1[x[0]] = 1
+            # for x in fterms_s2: feature7_2[x[0]] = 1
+            feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
 
-                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
+            tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
 
         # if len(self.X1) < ((self.num_true + self.num_false) / 2.0):
         #     if selectable_features is not None:
@@ -1880,13 +1956,12 @@ class calcWithCustomHyperparams(baseMetrics):
         else:
             self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
 
-        if self.file is None and self.accuracyresults:
-            file_name = 'dataset-accuracyresults-sim-metrics'
+        if not self.fname:
+            self.fname = 'results-evaluation'
             if canonical:
-                file_name += '_canonical'
+                self.fname += '_canonical'
             if sorting:
-                file_name += '_sorted'
-            self.file = open(file_name + '.csv', 'w+')
+                self.fname += '_sorted'
 
     def load_test_dataset(self, row, sorting=False, stemming=False, canonical=False, permuted=False, custom_thres='orig'):
         if row['res'].upper() == "TRUE":
@@ -1898,6 +1973,9 @@ class calcWithCustomHyperparams(baseMetrics):
 
         tmp_X1, tmp_X2 = [], []
         for flag in list({False, sorting}):
+            if (not flag and not config.MLConf.features_to_build['basic']) or (
+                    flag and not config.MLConf.features_to_build['sorted']): continue
+
             a, b = transform(row['s1'], row['s2'], sorting=flag, stemming=stemming, canonical=flag)
 
             start_time = time.time()
@@ -1936,7 +2014,7 @@ class calcWithCustomHyperparams(baseMetrics):
                     tmp_X2.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
             if flag: tmp_X2.append([sim16, sim17, sim15])
 
-        if sorting:
+        if config.MLConf.features_to_build['lgm'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
                                              canonical=canonical)
 
@@ -2017,6 +2095,9 @@ class calcWithCustomHyperparams(baseMetrics):
             tmp_X2.append([feature17, feature18, feature19, feature20, feature21, feature22, feature23, feature24,
                            feature25, feature26, feature27, feature28])
 
+        if config.MLConf.features_to_build['individual'] and sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
             start_time = time.time()
 
             method_nm = 'damerau_levenshtein'
@@ -2044,25 +2125,28 @@ class calcWithCustomHyperparams(baseMetrics):
                 # int(feature5_1), int(feature5_2)
             ])
 
-            if config.MLConf.extra_features:
-                # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
-                # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
-                feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
-                # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
-                # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
-                feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
-                # feature5_1 = False if len(fterms_s1) == 0 else True
-                # feature5_2 = False if len(fterms_s2) == 0 else True
-                # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
-                # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
-                # for x in fterms_s1: feature7_1[x[0]] = 1
-                # for x in fterms_s2: feature7_2[x[0]] = 1
-                feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
+        if config.MLConf.features_to_build['stats'] and sorting:
+            row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
+                                             canonical=canonical)
+            # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
+            # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
+            feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
+            # feature4_1 = FEMLFeatures.containsDashConnected_words(row['s1'])
+            # feature4_2 = FEMLFeatures.containsDashConnected_words(row['s2'])
+            feature2_1, feature2_2 = FEMLFeatures.containsFreqTerms(row['s1'], row['s2'])
+            # feature5_1 = False if len(fterms_s1) == 0 else True
+            # feature5_2 = False if len(fterms_s2) == 0 else True
+            # feature6_1, feature6_2 = FEMLFeatures().containsInPos(row['s1'], row['s2'])
+            # feature7_1 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # feature7_2 = [0] * (len(LSimilarityVars.freq_ngrams['tokens'] | LSimilarityVars.freq_ngrams['chars']))
+            # for x in fterms_s1: feature7_1[x[0]] = 1
+            # for x in fterms_s2: feature7_2[x[0]] = 1
+            feature3_1, feature3_2 = FEMLFeatures.positionalFreqTerms(row['s1'], row['s2'])
 
-                tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
+            tmp_X2.append([feature1_1, feature1_2, feature2_1, feature2_2] + feature3_1 + feature3_2)
 
-        self.test_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
+        new_features = np.around(list(chain.from_iterable(tmp_X2)), 5)
+        self.test_X.append(new_features.tolist())
 
     def train_classifiers(self, ml_algs, polynomial=False, standardize=False, fs_method=None, features=None):
         if polynomial:
@@ -2092,8 +2176,20 @@ class calcWithCustomHyperparams(baseMetrics):
             #         ((row for row in (self.Y2, self.Y1)))
             # ):
             start_time = time.time()
-            cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
-            features_supported = [True] * len(cols)
+            cols = []
+            if config.MLConf.features_to_build['basic']:
+                cols += StaticValues.basicFeatures
+            if config.MLConf.features_to_build['sorted']:
+                cols += StaticValues.sortedFeatures
+            if config.MLConf.features_to_build['lgm']:
+                cols += StaticValues.lgmFeatures
+            if config.MLConf.features_to_build['individual']:
+                cols += StaticValues.individualFeatures
+            if config.MLConf.features_to_build['stats']:
+                cols += StaticValues.extraFeatures
+            feature_names = np.asarray(cols)
+
+            # features_supported = [True] * len(cols)
             # if features is not None:
             #     features_supported = [x and y for x, y in zip(features_supported, features)]
             # if fs_method is not None and {'rf', 'et', 'xgboost'}.intersection({name}):
@@ -2108,7 +2204,11 @@ class calcWithCustomHyperparams(baseMetrics):
 
             pipe_params = None
             # TODO check why hasattr cannot find feature_importances_
-            # if hasattr(model, "feature_importances_") or hasattr(model, "coef_"):
+            # if hasattr(model, 'feature_importances_') or \
+            #         isinstance(getattr(type(model), 'feature_importances_', None), property) or \
+            #         hasattr(model, 'coef_') or \
+            #         isinstance(getattr(type(model), 'coef_', None), property):
+            #     print('feature_importances found for clf {}'.format(name))
             selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
             pipe_params = [('scaler', scaler), ('clf', selector)]
             # else:
@@ -2121,29 +2221,35 @@ class calcWithCustomHyperparams(baseMetrics):
 
             start_time = time.time()
 
-            predictedL += list(pipe_clf.predict(self.test_X))
+            predictedL += list(pipe_clf.named_steps['clf'].predict(self.test_X))
             # predictedL += list(best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
-            # if hasattr(model, "feature_importances_"):
-            #     if clf_abbr not in self.importances:
-            #         self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
-            #
-            #     for idx, val in zip([i for i, x in enumerate(features_supported) if x], model.feature_importances_):
-            #         self.importances[clf_abbr][idx] += val
-            # elif hasattr(model, "coef_"):
-            #     if clf_abbr not in self.importances:
-            #         self.importances[clf_abbr] = np.zeros(len(StaticValues.featureColumns), dtype=float)
-            #
-            #     for idx, val in zip([i for i, x in enumerate(features_supported) if x],
-            #                         model.coef_.ravel()):
-            #         self.importances[clf_abbr][idx] += val
+            # print(pipe_clf.named_steps['clf'].ranking_)
+            if hasattr(pipe_clf.named_steps['clf'].estimator_, "feature_importances_"):
+                if clf_abbr not in self.importances:
+                    self.importances[clf_abbr] = np.zeros(len(cols), dtype=float)
+
+                feature_importances = pipe_clf.named_steps['clf'].estimator_.feature_importances_
+                support = pipe_clf.named_steps['clf'].support_
+                for k, v in zip(feature_names[support], feature_importances):
+                    self.importances[clf_abbr][cols.index(k)] += v
+            elif hasattr(pipe_clf.named_steps['clf'].estimator_, "coef_"):
+                if clf_abbr not in self.importances:
+                    self.importances[clf_abbr] = np.zeros(len(cols), dtype=float)
+
+                feature_importances = pipe_clf.named_steps['clf'].estimator_.coef_.ravel()
+                support = pipe_clf.named_steps['clf'].support_
+                for k, v in zip(feature_names[support], feature_importances):
+                    self.importances[clf_abbr][cols.index(k)] += v
             # # print(model.score(X_pred, y_pred))
 
             print("Best features discovered: ", end="")
             print(*tot_features, sep=",")
             print("Training took {0:.3f} sec ({1:.3f} min)".format(train_time, train_time / 60.0))
             self.timers[clf_abbr] += self.timer
+
+            if self.accuracyresults: self.file = open('{}_{}.csv'.format(self.fname, name), 'w+')
 
             print("Matching records...")
             # real = self.Y2 + self.Y1
@@ -2173,6 +2279,8 @@ class calcWithCustomHyperparams(baseMetrics):
             # else:
             #     Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
 
+            if self.accuracyresults and not self.file.closed: self.file.close()
+
     def print_stats(self):
         for name in self.mlalgs_to_run:
             if name not in StaticValues.classifiers_abbr.keys():
@@ -2187,7 +2295,17 @@ class calcWithCustomHyperparams(baseMetrics):
                     print("The classifier {} does not expose \"coef_\" or \"feature_importances_\" attributes".format(
                         name))
                 else:
-                    cols = StaticValues.featureColumns + StaticValues.extraFeatures if config.MLConf.extra_features else StaticValues.featureColumns
+                    cols = []
+                    if config.MLConf.features_to_build['basic']:
+                        cols += StaticValues.basicFeatures
+                    if config.MLConf.features_to_build['sorted']:
+                        cols += StaticValues.sortedFeatures
+                    if config.MLConf.features_to_build['lgm']:
+                        cols += StaticValues.lgmFeatures
+                    if config.MLConf.features_to_build['individual']:
+                        cols += StaticValues.individualFeatures
+                    if config.MLConf.features_to_build['stats']:
+                        cols += StaticValues.extraFeatures
                     importances = self.importances[idx]
                     importances = np.ma.masked_equal(importances, 0.0)
                     if importances.mask is np.ma.nomask: importances.mask = np.zeros(importances.shape, dtype=bool)

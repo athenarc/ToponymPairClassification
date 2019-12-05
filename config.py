@@ -69,8 +69,15 @@ class MLConf:
     train_score = False
     stopping_rounds = 30
     features_to_select = 20
-    extra_features = False
     pos_freqs = 20
+
+    features_to_build = {
+        'basic': True,
+        'sorted': True,
+        'lgm': True,
+        'individual': True,
+        'stats': True,
+    }
 
     # accepted values: randomized, grid, hyperband - not yet implemented!!!
     hyperparams_search_method = 'randomized'
@@ -82,7 +89,7 @@ class MLConf:
     Details on available inputs.       
     """
     #: int: Number of iterations that RandomizedSearchCV should execute. It applies only when :class:`hyperparams_search_method` equals to 'randomized'.
-    max_iter = 300
+    max_iter = 3
 
     clf_static_params = {
         'SVM': {

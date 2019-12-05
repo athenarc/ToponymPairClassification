@@ -62,7 +62,7 @@ Arguments:
 import os, sys
 # import configparser
 from docopt import docopt
-from kitchen.text.converters import getwriter
+# from kitchen.text.converters import getwriter
 
 import executionMethods as rc
 from helpers import getRelativePathtoWorking, StaticValues
@@ -70,8 +70,8 @@ from datasetcreator import LSimilarityVars
 
 
 def main(args):
-    UTF8Writer = getwriter('utf8')
-    sys.stdout = UTF8Writer(sys.stdout)
+    # UTF8Writer = getwriter('utf8')
+    # sys.stdout = UTF8Writer(sys.stdout)
 
     if args["--onlyLATIN"]:
         LSimilarityVars.per_metric_optimal_values = StaticValues.MetricOptimalValues['latin']
@@ -101,5 +101,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    arguments = docopt(__doc__, version='FE-ML 1.0')
+    arguments = docopt(__doc__, version='FE-ML 2.1')
     main(arguments)

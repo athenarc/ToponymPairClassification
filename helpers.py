@@ -374,6 +374,75 @@ class StaticValues:
         "Avg LSimilarity_specialScore",
     ]
 
+    basicFeatures = [
+        "Damerau-Levenshtein",
+        "Jaro",
+        "Jaro-Winkler",
+        "Jaro-Winkler Reverse",
+        "Jaro-Winkler Sorted",
+        # "Permuted Jaro-Winkler",
+        "Cosine n-grams",
+        "Jaccard n-grams",
+        "Dice bi-grams",
+        "Jaccard skip-grams",
+        "Monge-Elkan",
+        "Soft-Jaccard",
+        "Davis/De Salles",
+    ]
+
+    sortedFeatures = [
+        "Damerau-Levenshtein Sorted",
+        "Jaro Sorted",
+        "Jaro-Winkler Sorted",
+        "Jaro-Winkler Reverse Sorted",
+        # "Sorted Jaro-Winkler Sorted",
+        # "Permuted Jaro-Winkler Sorted",
+        "Cosine n-grams Sorted",
+        "Jaccard n-grams Sorted",
+        "Dice bi-grams Sorted",
+        "Jaccard skip-grams Sorted",
+        "Monge-Elkan Sorted",
+        "Soft-Jaccard Sorted",
+        "Davis/De Salles Sorted",
+        "Tuned Jaro-Winkler",
+        "Tuned Jaro-Winkler Reverse",
+    ]
+
+    lgmFeatures = [
+        # "LSimilarity",
+        "X-Sim-Levenshtein_wavg",
+        # "LSimilarity_davies",
+        # "LSimilarity_skipgram",
+        # "LSimilarity_soft_jaccard",
+        # "LSimilarity_strike_a_match",
+        # "LSimilarity_cosine",
+        # "LSimilarity_monge_elkan",
+        # "LSimilarity_jaro_winkler",
+        # "LSimilarity_jaro",
+        # "LSimilarity_jaro_winkler_reversed",
+        "X-Sim_Davies/De Salles_wavg",
+        "X-Sim_Jaccard skip-grams_wavg",
+        "X-Sim_Soft-Jaccard_wavg",
+        "X-Sim_strike_a_match_wavg",
+        "X-Sim_Cosine n-grams_wavg",
+        "X-Sim_Jaccard n-grams_wavg",
+        "X-Sim_Monge-Elkan_wavg",
+        "X-Sim_Jaro-Winkler_wavg",
+        "X-Sim_Jaro_wavg",
+        "X-Sim_Jaro-Winkler Reverse_wavg",
+        "X-Sim_Tuned Jaro-Winkler_wavg",
+        "X-Sim_Tuned Jaro-Winkler Reverse_wavg",
+    ]
+
+    individualFeatures = [
+        # "LSimilarity_baseScore",
+        # "LSimilarity_mismatchScore",
+        # "LSimilarity_specialScore",
+        "X-Sim_BaseScore_wavg",
+        "X-Sim_MismatchScore_wang",
+        "X-Sim_SpecialScore_wavg",
+    ]
+
     extraFeatures = [
         # "contains_str1",
         # "contains_str2",
@@ -381,8 +450,8 @@ class StaticValues:
         "noTokens_s2",
         # "dashed_str1",
         # "dashed_str2",
-        "hasFTerms_s1",
-        "hasFTerms_s2",
+        "hasFreqTerms_s1",
+        "hasFreqTerms_s2",
         # "posOfHigherSim_str1_start",
         # "posOfHigherSim_str1_middle",
         # "posOfHigherSim_str1_end",
