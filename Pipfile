@@ -20,6 +20,7 @@ text-unidecode = "==1.2"
 xgboost = "==0.82"
 scipy = "*"
 statsmodels = "*"
+langdetect = "*"
 
 [requires]
 python_version = "3.8"
