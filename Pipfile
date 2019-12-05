@@ -1,0 +1,25 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+alphabet-detector = "==0.0.7"
+docopt = "==0.6.2"
+jellyfish = "==0.6.1"
+numpy = "==1.16.2"
+pandas = "==0.24.2"
+pprintpp = "==0.4.0"
+pycountry = "==18.12.8"
+pycountry-convert = "==0.7.2"
+scikit-learn = "==0.20.3"
+tabulate = "==0.8.3"
+text-unidecode = "==1.2"
+xgboost = "==0.82"
+scipy = "*"
+statsmodels = "*"
+
+[requires]
+python_version = "3.8"
