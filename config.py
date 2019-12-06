@@ -133,12 +133,12 @@ class MLConf:
         },
         'XGBoost': {
             # basic
-            # 'n_estimators': 3000,
+            'n_estimators': 3000,
             # global
             # 'colsample_bytree': 0.24017567934980052, 'eta': 0.0324220310237971, 'gamma': 3, 'max_depth': 83,
             # 'min_child_weight': 8, 'n_estimators': 988, 'subsample': 0.7029480027059571,
-            'colsample_bytree': 0.7495179128964403, 'min_child_weight': 4, 'n_estimators': 605,
-            'subsample': 0.7936869738003342, 'eta': 0.13386673842293018, 'max_depth': 4, 'gamma': 1,
+            # 'colsample_bytree': 0.7495179128964403, 'min_child_weight': 4, 'n_estimators': 605,
+            # 'subsample': 0.7936869738003342, 'eta': 0.13386673842293018, 'max_depth': 4, 'gamma': 1,
             # latin
             'seed': seed_no, 'nthread': n_jobs
         },
