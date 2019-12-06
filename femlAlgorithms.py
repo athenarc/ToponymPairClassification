@@ -84,7 +84,7 @@ def ascii_transliteration_and_punctuation_strip(s):
     return s
 
 
-def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' ', sort_thres=0.45):
+def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' ', sort_thres=config.sort_thres):
     a = text_type(strA) #.lower()
     b = text_type(strB)
 
