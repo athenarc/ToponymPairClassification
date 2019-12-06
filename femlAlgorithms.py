@@ -2258,8 +2258,11 @@ class calcWithCustomHyperparams(baseMetrics):
             print("Training took {0:.3f} sec ({1:.3f} min)".format(train_time, train_time / 60.0))
             self.timers[clf_abbr] += self.timer
 
-            true_sum = sum(config.MLConf.features_to_build.values())
-            pos = ''.join([k for k, v in config.MLConf.features_to_build.items() if v is True]) if true_sum == 1 else str(true_sum)
+            trues_sum = sum(config.MLConf.features_to_build.values())
+            max_len = len(config.MLConf.features_to_build.keys())
+            pos = '_'.join([k for k, v in config.MLConf.features_to_build.items() if v is True]) \
+                if trues_sum < max_len \
+                else 'tot'
             if self.accuracyresults: self.file = open('{}_{}_{}.csv'.format(self.fname, name, pos), 'w+')
 
             print("Matching records...")
@@ -2387,7 +2390,7 @@ class calcLSimilarities(baseMetrics):
 
         if self.accuracyresults:
             if self.file is None:
-                file_name = 'dataset-accuracyresults-sim-metrics'
+                file_name = 'dataset-accuracyresults-lgm-sim-metrics'
                 if canonical:
                     file_name += '_canonical'
                 if sorting:
