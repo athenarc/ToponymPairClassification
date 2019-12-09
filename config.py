@@ -11,7 +11,7 @@ test_dataset = 'datasets/dataset-string-similarity.txt'
 
 #: float: Similarity threshold on whether sorting on toponym tokens is applied or not. It is triggered on a score
 #: below the assigned threshold.
-sort_thres = 0.55
+sort_thres = 0.45
 
 thres_range = [30, 71]
 thres_weights = [
