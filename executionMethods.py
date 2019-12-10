@@ -201,7 +201,7 @@ class Evaluator:
     def compute_features(self, s1, s2, sorted=True):
         f = []
         for status in list({False, sorted}):
-            a, b = transform(s1, s2, sorting=status, canonical=status)
+            a, b = transform(s1, s2, sorting=status, canonical=status, simple_sorting=False)
 
             sim1 = StaticValues.algorithms['damerau_levenshtein'](a, b)
             sim8 = StaticValues.algorithms['jaccard'](a, b)
@@ -225,7 +225,7 @@ class Evaluator:
                 f.append([sim1, sim2, sim3, sim4, sim5, sim7, sim8, sim9, sim10, sim11, sim12, sim13])
 
         if sorted:
-            a, b = transform(s1, s2, sorting=True, canonical=True)
+            a, b = transform(s1, s2, sorting=True, canonical=True, simple_sorting=False)
 
             sim1 = self._compute_lgm_sim(a, b, 'damerau_levenshtein')
             sim2 = self._compute_lgm_sim(a, b, 'davies')
@@ -498,7 +498,7 @@ class Evaluator:
                                         delimiter='\t')
 
                 for row in reader:
-                    a, b = transform(row['s1'], row['s2'], sorting=True, canonical=True)
+                    a, b = transform(row['s1'], row['s2'], sorting=True, canonical=True, simple_sorting=False)
                     baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(a, b, 0.55)
                     output_f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
                         row['res'].upper(),

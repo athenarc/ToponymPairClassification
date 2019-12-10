@@ -84,7 +84,7 @@ def ascii_transliteration_and_punctuation_strip(s):
     return s
 
 
-def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimiter=' ', sort_thres=config.sort_thres):
+def transform(strA, strB, sorting=False, simple_sorting=True, stemming=False, canonical=False, delimiter=' ', sort_thres=config.sort_thres):
     a = text_type(strA) #.lower()
     b = text_type(strB)
 
@@ -98,7 +98,7 @@ def transform(strA, strB, sorting=False, stemming=False, canonical=False, delimi
 
         sim_concatenated = StaticValues.algorithms['damerau_levenshtein'](tmp_a, tmp_b)
         sim_orig = StaticValues.algorithms['damerau_levenshtein'](a, b)
-        if sim_concatenated < sort_thres:
+        if simple_sorting or (sim_concatenated < sort_thres):
             a = " ".join(sorted_nicely(a.split(delimiter)))
             b = " ".join(sorted_nicely(b.split(delimiter)))
         elif sim_concatenated > sim_orig:
@@ -995,7 +995,7 @@ class calcCustomFEMLExtended(baseMetrics):
             start_time = time.time()
 
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
@@ -1081,7 +1081,7 @@ class calcCustomFEMLExtended(baseMetrics):
             start_time = time.time()
 
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             method_nm = 'damerau_levenshtein'
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
@@ -1157,7 +1157,7 @@ class calcCustomFEMLExtended(baseMetrics):
 
         if config.MLConf.features_to_build['stats'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
             # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
@@ -1242,7 +1242,7 @@ class calcCustomFEMLExtended(baseMetrics):
             start_time = time.time()
 
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
@@ -1324,7 +1324,7 @@ class calcCustomFEMLExtended(baseMetrics):
             start_time = time.time()
 
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             method_nm = 'damerau_levenshtein'
             baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(
@@ -1384,7 +1384,7 @@ class calcCustomFEMLExtended(baseMetrics):
 
         if config.MLConf.features_to_build['stats'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
             # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
@@ -1823,7 +1823,7 @@ class calcWithCustomHyperparams(baseMetrics):
             start_time = time.time()
 
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
@@ -1907,7 +1907,7 @@ class calcWithCustomHyperparams(baseMetrics):
 
         if config.MLConf.features_to_build['individual'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
             start_time = time.time()
 
             method_nm = 'damerau_levenshtein'
@@ -1937,7 +1937,7 @@ class calcWithCustomHyperparams(baseMetrics):
 
         if config.MLConf.features_to_build['stats'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
             # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
             # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
             feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
@@ -2021,7 +2021,7 @@ class calcWithCustomHyperparams(baseMetrics):
             start_time = time.time()
 
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
 
             lsim_baseThres = 'avg' if flag else 'simple'
 
@@ -2105,7 +2105,7 @@ class calcWithCustomHyperparams(baseMetrics):
 
         if config.MLConf.features_to_build['individual'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
             start_time = time.time()
 
             method_nm = 'damerau_levenshtein'
@@ -2135,7 +2135,7 @@ class calcWithCustomHyperparams(baseMetrics):
 
         if config.MLConf.features_to_build['stats'] and sorting:
             row['s1'], row['s2'] = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming,
-                                             canonical=canonical)
+                                             canonical=canonical, simple_sorting=False)
             # feature2_1 = FEMLFeatures.contains(row['s1'], row['s2'])
             # feature2_2 = FEMLFeatures.contains(row['s2'], row['s1'])
             feature1_1, feature1_2 = FEMLFeatures.no_of_words(row['s1'], row['s2'])
@@ -2372,7 +2372,7 @@ class calcLSimilarities(baseMetrics):
         tot_res = ""
         flag_true_match = 1.0 if row['res'].upper() == "TRUE" else 0.0
 
-        a, b = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical)
+        a, b = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical, simple_sorting=False)
 
         tot_res += self._generic_evaluator(16, 'damerau_levenshtein', a, b, flag_true_match, custom_thres)
         tot_res += self._generic_evaluator(21, 'jaccard', a, b, flag_true_match, custom_thres)
@@ -2421,7 +2421,7 @@ class testMetrics(baseMetrics):
         tot_res = ""
         flag_true_match = 1.0 if row['res'].upper() == "TRUE" else 0.0
 
-        a, b = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical)
+        a, b = transform(row['s1'], row['s2'], sorting=sorting, stemming=stemming, canonical=canonical, simple_sorting=False)
 
         baseTerms, mismatchTerms, specialTerms = lsimilarity_terms(a, b, term_split_thres)
         rbaseTerms = {
