@@ -128,7 +128,10 @@ class PipelineRFE(Pipeline):
 
     def fit(self, X, y=None, **fit_params):
         super(PipelineRFE, self).fit(X, y, **fit_params)
-        self.feature_importances_ = self.steps[-1][-1].feature_importances_
+        if hasattr(self.steps[-1][-1], 'feature_importances_'):
+            self.feature_importances_ = self.steps[-1][-1].feature_importances_
+        if hasattr(self.steps[-1][-1], 'coef_'):
+            self.coef_ = self.steps[-1][-1].coef_
         return self
 
 
@@ -1418,7 +1421,9 @@ class calcCustomFEMLExtended(baseMetrics):
 
             clf_abbr = StaticValues.classifiers_abbr[name]
             model = self.classifiers[clf_abbr]
-            selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            # selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            selector = RFECV(model, min_features_to_select=config.MLConf.features_to_select, step=2, scoring='accuracy',
+                             cv=StratifiedKFold(2, random_state=config.seed_no), n_jobs=config.MLConf.n_jobs)
             scaler = MinMaxScaler()
             # scaler = StandardScaler()
 
@@ -1964,7 +1969,8 @@ class calcWithCustomHyperparams(baseMetrics):
         if selectable_features is not None:
             self.train_X.append(list(compress(chain.from_iterable(tmp_X2), selectable_features)))
         else:
-            self.train_X.append(np.around(list(chain.from_iterable(tmp_X2)), 5).tolist())
+            new_features = np.around(list(chain.from_iterable(tmp_X2)), 5)
+            self.train_X.append(new_features.tolist())
 
         if not self.fname: self.fname = 'results-evaluation_{}'.format(custom_thres.replace('/', ''))
 
@@ -2218,11 +2224,15 @@ class calcWithCustomHyperparams(baseMetrics):
             #         hasattr(model, 'coef_') or \
             #         isinstance(getattr(type(model), 'coef_', None), property):
             #     print('feature_importances found for clf {}'.format(name))
-            selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
-            pipe_params = [('scaler', scaler), ('clf', selector)]
+            # selector = RFE(model, n_features_to_select=config.MLConf.features_to_select, step=2)
+            pipe_params = PipelineRFE([('scaler', scaler), ('clf', model)])
             # else:
             #     pipe_params = [('scaler', scaler), ('clf', model)]
-            pipe_clf = Pipeline(pipe_params)
+            pipe_clf = RFECV(
+                pipe_params, step=2, scoring='accuracy', cv=StratifiedKFold(5, random_state=config.seed_no),
+                n_jobs=config.MLConf.n_jobs, min_features_to_select=min(config.MLConf.features_to_select, len(feature_names))
+            )
+
             pipe_clf.fit(self.train_X, self.train_Y)
             # print(pipe_clf.named_steps['clf'].support_)
             # model.fit(np.asarray(self.train_X), self.train_Y)
@@ -2230,25 +2240,25 @@ class calcWithCustomHyperparams(baseMetrics):
 
             start_time = time.time()
 
-            predictedL += list(pipe_clf.named_steps['clf'].predict(self.test_X))
+            predictedL += list(pipe_clf.predict(self.test_X))
             # predictedL += list(best_clf['estimator'].predict(self.test_X))
             self.timers[clf_abbr] += (time.time() - start_time)
 
             # print(pipe_clf.named_steps['clf'].ranking_)
-            if hasattr(pipe_clf.named_steps['clf'].estimator_, "feature_importances_"):
+            if hasattr(pipe_clf.estimator_, "feature_importances_"):
                 if clf_abbr not in self.importances:
                     self.importances[clf_abbr] = np.zeros(len(cols), dtype=float)
 
-                feature_importances = pipe_clf.named_steps['clf'].estimator_.feature_importances_
-                support = pipe_clf.named_steps['clf'].support_
+                feature_importances = pipe_clf.estimator_.feature_importances_
+                support = pipe_clf.support_
                 for k, v in zip(feature_names[support], feature_importances):
                     self.importances[clf_abbr][cols.index(k)] += v
-            elif hasattr(pipe_clf.named_steps['clf'].estimator_, "coef_"):
+            elif hasattr(pipe_clf.estimator_, "coef_"):
                 if clf_abbr not in self.importances:
                     self.importances[clf_abbr] = np.zeros(len(cols), dtype=float)
 
-                feature_importances = pipe_clf.named_steps['clf'].estimator_.coef_.ravel()
-                support = pipe_clf.named_steps['clf'].support_
+                feature_importances = pipe_clf.estimator_.coef_.ravel()
+                support = pipe_clf.support_
                 for k, v in zip(feature_names[support], feature_importances):
                     self.importances[clf_abbr][cols.index(k)] += v
             # # print(model.score(X_pred, y_pred))
