@@ -2229,7 +2229,7 @@ class calcWithCustomHyperparams(baseMetrics):
             # else:
             #     pipe_params = [('scaler', scaler), ('clf', model)]
             pipe_clf = RFECV(
-                pipe_params, step=2, scoring='accuracy', cv=StratifiedKFold(3, random_state=config.seed_no),
+                pipe_params, step=2, scoring='accuracy', cv=StratifiedKFold(5, random_state=config.seed_no),
                 n_jobs=config.MLConf.n_jobs, min_features_to_select=min(config.MLConf.features_to_select, len(feature_names))
             )
 
