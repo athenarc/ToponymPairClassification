@@ -45,12 +45,12 @@ class Evaluator:
         try:
             self.evalClass = self.evaluatorType_action[evalType](njobs, accuracyresults)
         except KeyError:
-            print("Unkown method")
+            print("Unknown method")
             return 1
 
         with open(dataset, encoding='utf8') as csvfile:
             reader = csv.DictReader(csvfile, fieldnames=["s1", "s2", "res", "c1", "c2", "a1", "a2", "cc1", "cc2"],
-                                    delimiter='\t')
+                                    delimiter='|')
             for row in reader:
                 self.evalClass.preprocessing(row)
 
@@ -322,9 +322,9 @@ class Evaluator:
                 print(k, max(val, key=lambda x: x[1][0]))
 
     def test_cases(self, dataset, test_case):
-        if test_case - 1 == 0:
+        if (test_case - 1) == 0:
             print("Not implemented yet!!!")
-        elif test_case - 1 == 1:
+        elif (test_case - 1) == 1:
             if not os.path.exists("output"):
                 os.makedirs("output")
 

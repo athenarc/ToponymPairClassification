@@ -6,6 +6,8 @@ import re
 
 from langdetect import detect, lang_detect_exception
 import pycountry
+from nltk import SnowballStemmer, wordpunct_tokenize
+from nltk.corpus import stopwords
 
 from datasetcreator import damerau_levenshtein, jaccard, jaro, jaro_winkler, monge_elkan, cosine, \
     strike_a_match, soft_jaccard, sorted_winkler, permuted_winkler, skipgram, davies, l_jaro_winkler, lsimilarity, \
@@ -37,8 +39,17 @@ def get_langnm(s, lang_detect=False):
 # Clean the string from stopwords, puctuations based on language detections feature
 # Returned values #1: non-stopped words, #2: stopped words
 def normalize_str(s, stop_words=None, sorting=False, lang_detect=False):
-    print("Not implemented yet!!!")
-    return [], []
+    lname = get_langnm(s, lang_detect)
+    tokens = wordpunct_tokenize(s)
+    words = [word.lower() for word in tokens if word.isalpha()]
+    stopwords_set = set(stopwords.words(lname)) if stop_words is None else set(stop_words)
+
+    filtered_words = sorted_nicely(filter(lambda token: token not in stopwords_set, words)) if sorting else \
+        filter(lambda token: token not in stopwords_set, words)
+    stopped_words = sorted_nicely(filter(lambda token: token not in filtered_words, words)) if sorting else \
+        filter(lambda token: token not in filtered_words, words)
+
+    return list(filtered_words), list(stopped_words)
 
 
 def perform_stemming(s, lang_detect=False):

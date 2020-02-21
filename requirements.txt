@@ -12,4 +12,6 @@ scipy
 tabulate==0.8.3
 text-unidecode==1.2
 xgboost==0.82
-#pyxDamerauLevenshtein==1.5.3
+# pyxDamerauLevenshtein==1.5.3
+# python -m nltk.downloader stopwords
+nltk==3.4.5
